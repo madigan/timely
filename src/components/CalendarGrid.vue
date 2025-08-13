@@ -1,37 +1,57 @@
 <template>
   <div class="p-8 max-w-7xl mx-auto">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Calendar Overview</h1>
-      <p class="text-base-content/70">View your church events across enabled calendars</p>
+      <h1 class="text-3xl font-bold mb-4">Calendar Overview</h1>
+      <p class="text-base-content/70 mb-6">View your church events across enabled calendars</p>
+      
+      <!-- Date Range Controls -->
+      <div class="bg-base-100 rounded-lg p-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium">From:</label>
+            <input 
+              type="date" 
+              class="input input-bordered input-sm"
+              v-model="fromDate"
+              @change="updateDateRange"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium">To:</label>
+            <input 
+              type="date" 
+              class="input input-bordered input-sm"
+              v-model="toDate"
+              @change="updateDateRange"
+            />
+          </div>
+          <button 
+            class="btn btn-primary btn-sm"
+            @click="resetToDefault"
+          >
+            Reset to Default
+          </button>
+        </div>
+      </div>
     </div>
     
-    <div class="grid lg:grid-cols-2 gap-8">
-      <!-- Current Month -->
-      <div class="bg-base-100 rounded-lg p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold">{{ currentMonthName }} {{ currentYear }}</h2>
-          <div class="badge badge-primary">Current</div>
+    <div class="space-y-4">
+      <div 
+        v-for="month in monthsInRange" 
+        :key="`${month.year}-${month.month}`"
+        class="bg-base-100 rounded-lg p-4 shadow-sm"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold">{{ month.name }} {{ month.year }}</h2>
+          <div v-if="month.isCurrent" class="badge badge-primary badge-sm">Current</div>
         </div>
         <CalendarMonth 
-          :year="currentYear" 
-          :month="currentMonth" 
-          :events="currentMonthEvents"
+          :year="month.year" 
+          :month="month.month" 
+          :events="month.events"
           :categories="categories"
-          @dayClick="showDayDetails"
-        />
-      </div>
-      
-      <!-- Next Month -->
-      <div class="bg-base-100 rounded-lg p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold">{{ nextMonthName }} {{ nextYear }}</h2>
-          <div class="badge badge-secondary">Next</div>
-        </div>
-        <CalendarMonth 
-          :year="nextYear" 
-          :month="nextMonth" 
-          :events="nextMonthEvents"
-          :categories="categories"
+          :startDate="new Date(fromDate)"
+          :endDate="new Date(toDate)"
           @dayClick="showDayDetails"
         />
       </div>
@@ -110,30 +130,187 @@ import CalendarMonth from "./CalendarMonth.vue";
 const calendarStore = useCalendarStore();
 const categoryStore = useCategoryStore();
 
-const currentMonthEvents = ref<any[]>([]);
-const nextMonthEvents = ref<any[]>([]);
 const showModal = ref(false);
 const selectedDay = ref<any>(null);
+const allEvents = ref<any[]>([]);
 
+// Date range controls
 const now = new Date();
-const currentYear = ref(now.getFullYear());
-const currentMonth = ref(now.getMonth());
+const fromDate = ref(formatDateForInput(new Date(now.getFullYear(), now.getMonth(), 1)));
+const toDate = ref(formatDateForInput(new Date(now.getFullYear(), now.getMonth() + 2, 0)));
 
-const nextMonth = computed(() => {
-  return currentMonth.value === 11 ? 0 : currentMonth.value + 1;
+const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const monthsInRange = computed(() => {
+  const start = new Date(fromDate.value);
+  const end = new Date(toDate.value);
+  const months = [];
+  
+  // Start from the first day of the month containing the start date
+  const current = new Date(start.getFullYear(), start.getMonth(), 1);
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  while (current <= end) {
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const isCurrent = year === currentYear && month === currentMonth;
+    
+    // Check if this month overlaps with our date range
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
+    
+    // Only include months that actually overlap with the selected range
+    if (monthEnd >= start && monthStart <= end) {
+      // Filter events for this month within the date range
+      const monthEvents = allEvents.value.filter(event => {
+        const eventDate = new Date(event.start.dateTime || event.start.date);
+        return eventDate >= Math.max(monthStart, start) && 
+               eventDate <= Math.min(monthEnd, end);
+      });
+      
+      months.push({
+        year,
+        month,
+        name: current.toLocaleDateString('en-US', { month: 'long' }),
+        isCurrent,
+        events: monthEvents
+      });
+    }
+    
+    current.setMonth(current.getMonth() + 1);
+  }
+  
+  return months;
 });
 
-const nextYear = computed(() => {
-  return currentMonth.value === 11 ? currentYear.value + 1 : currentYear.value;
+const continuousCalendarRows = computed(() => {
+  const start = new Date(fromDate.value);
+  const end = new Date(toDate.value);
+  const today = new Date();
+  
+  // Find the Sunday of the week containing the start date
+  const startOfWeek = new Date(start);
+  startOfWeek.setDate(start.getDate() - start.getDay());
+  
+  // Generate all days from start of first week to end date
+  const allCells = [];
+  const current = new Date(startOfWeek);
+  
+  while (current <= end) {
+    const isCurrentMonth = current.getMonth() === now.getMonth() && current.getFullYear() === now.getFullYear();
+    const isToday = current.toDateString() === today.toDateString();
+    const isVisible = current >= start && current <= end;
+    
+    // Get events for this day
+    const dayEvents = allEvents.value.filter(event => {
+      const eventDate = new Date(event.start.dateTime || event.start.date);
+      return eventDate.toDateString() === current.toDateString();
+    });
+    
+    // Calculate category percentages
+    const categoryPercentages = calculateCategoryPercentages(dayEvents);
+    
+    allCells.push({
+      date: current.getDate(),
+      fullDate: current.toISOString().split('T')[0],
+      isCurrentMonth,
+      isVisible,
+      isToday,
+      dayEvents,
+      categoryPercentages
+    });
+    
+    current.setDate(current.getDate() + 1);
+  }
+  
+  // Group into rows of 7 and filter out rows with no visible cells
+  const rows = [];
+  for (let i = 0; i < allCells.length; i += 7) {
+    const row = allCells.slice(i, i + 7);
+    const hasVisibleCells = row.some(cell => cell.isVisible);
+    
+    if (hasVisibleCells) {
+      // Pad row to 7 cells if needed
+      while (row.length < 7) {
+        row.push({
+          date: '',
+          fullDate: '',
+          isCurrentMonth: false,
+          isVisible: false,
+          isToday: false,
+          dayEvents: [],
+          categoryPercentages: []
+        });
+      }
+      rows.push(row);
+    }
+  }
+  
+  return rows;
 });
 
-const currentMonthName = computed(() => {
-  return new Date(currentYear.value, currentMonth.value).toLocaleDateString('en-US', { month: 'long' });
-});
+function calculateCategoryPercentages(events: any[]) {
+  if (events.length === 0) return [];
+  
+  const categoryCounts: { [key: string]: number } = {};
+  
+  // Count events by category
+  events.forEach(event => {
+    const category = categorizeEvent(event);
+    categoryCounts[category.id] = (categoryCounts[category.id] || 0) + 1;
+  });
+  
+  // Convert to array with category info
+  const categoryResults = Object.entries(categoryCounts).map(([categoryId, count]) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    const percentage = Math.round((count / events.length) * 100);
+    
+    return {
+      id: categoryId,
+      name: category?.name || 'Other',
+      color: category?.color || '#64748b',
+      count,
+      percentage
+    };
+  }).sort((a, b) => b.count - a.count);
+  
+  // If more than 4 categories, combine smaller ones into "Other"
+  if (categoryResults.length > 4) {
+    const top3 = categoryResults.slice(0, 3);
+    const remainder = categoryResults.slice(3);
+    
+    const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0);
+    const otherPercentage = Math.round((otherCount / events.length) * 100);
+    
+    const other = {
+      id: 'other',
+      name: 'Other',
+      color: '#64748b',
+      count: otherCount,
+      percentage: otherPercentage
+    };
+    
+    return [...top3, other];
+  }
+  
+  return categoryResults;
+}
 
-const nextMonthName = computed(() => {
-  return new Date(nextYear.value, nextMonth.value).toLocaleDateString('en-US', { month: 'long' });
-});
+function categorizeEvent(event: any) {
+  const eventText = (event.summary + ' ' + (event.description || '')).toLowerCase();
+  
+  for (const category of categories) {
+    for (const keyword of category.keywords) {
+      if (eventText.includes(keyword.toLowerCase())) {
+        return category;
+      }
+    }
+  }
+  
+  // Default to first category if no match
+  return categories[0] || { id: 'default', name: 'Other', color: '#64748b', keywords: [] };
+}
 
 const { categories } = categoryStore;
 
@@ -145,28 +322,47 @@ async function loadEvents() {
   const calendars = await calendarStore.getCalendars();
   const enabledCalendars = calendars.filter(cal => cal.isEnabled);
   
-  let allEvents: any[] = [];
+  const events: any[] = [];
   
   for (const calendar of enabledCalendars) {
-    const events = await calendarStore.getEvents(calendar.id);
-    allEvents.push(...events);
+    const calendarEvents = await calendarStore.getEvents(calendar.id);
+    events.push(...calendarEvents);
   }
   
-  // Filter events by month
-  const currentMonthStart = new Date(currentYear.value, currentMonth.value, 1);
-  const currentMonthEnd = new Date(currentYear.value, currentMonth.value + 1, 0);
-  const nextMonthStart = new Date(nextYear.value, nextMonth.value, 1);
-  const nextMonthEnd = new Date(nextYear.value, nextMonth.value + 1, 0);
+  allEvents.value = events;
+}
+
+function updateDateRange() {
+  // Events are automatically filtered by the computed property
+}
+
+function resetToDefault() {
+  const now = new Date();
+  fromDate.value = formatDateForInput(new Date(now.getFullYear(), now.getMonth(), 1));
+  toDate.value = formatDateForInput(new Date(now.getFullYear(), now.getMonth() + 2, 0));
+}
+
+function formatDateForInput(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function formatDateRange(startDate: string, endDate: string): string {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
   
-  currentMonthEvents.value = allEvents.filter(event => {
-    const eventDate = new Date(event.start.dateTime || event.start.date);
-    return eventDate >= currentMonthStart && eventDate <= currentMonthEnd;
+  const startStr = start.toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric',
+    year: 'numeric'
   });
   
-  nextMonthEvents.value = allEvents.filter(event => {
-    const eventDate = new Date(event.start.dateTime || event.start.date);
-    return eventDate >= nextMonthStart && eventDate <= nextMonthEnd;
+  const endStr = end.toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric'
   });
+  
+  return `${startStr} - ${endStr}`;
 }
 
 function showDayDetails(dayCell: any) {

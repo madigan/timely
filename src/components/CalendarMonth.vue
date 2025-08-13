@@ -8,18 +8,26 @@
     </div>
     
     <!-- Calendar cells -->
-    <div class="grid grid-cols-7 gap-1">
+    <div class="space-y-1">
       <div 
-        v-for="cell in calendarCells" 
-        :key="`${cell.date}-${cell.isCurrentMonth}`"
-        class="aspect-square border border-base-300 rounded p-1 flex flex-col cursor-pointer hover:bg-base-300/50 transition-colors"
-        :class="{
-          'bg-base-200': !cell.isCurrentMonth,
-          'bg-base-100': cell.isCurrentMonth,
-          'ring-2 ring-primary': cell.isToday
-        }"
-        @click="cell.isCurrentMonth && cell.dayEvents.length > 0 ? $emit('dayClick', cell) : null"
+        v-for="(row, rowIndex) in calendarRows" 
+        :key="rowIndex"
+        class="grid grid-cols-7 gap-1"
       >
+        <div 
+          v-for="cell in row" 
+          :key="`${cell.date}-${cell.isCurrentMonth}`"
+          class="aspect-square border rounded p-1 flex flex-col transition-colors"
+          :class="{
+            'border-base-300 cursor-pointer hover:bg-base-300/50': cell.isVisible,
+            'border-transparent': !cell.isVisible,
+            'bg-base-200': !cell.isCurrentMonth && cell.isVisible,
+            'bg-base-100': cell.isCurrentMonth && cell.isVisible,
+            'ring-2 ring-primary': cell.isToday && cell.isVisible,
+            'invisible': !cell.isVisible
+          }"
+          @click="cell.isVisible && cell.dayEvents.length > 0 ? $emit('dayClick', cell) : null"
+        >
         <div class="flex items-start justify-between mb-1">
           <div class="text-xs font-medium" :class="{ 'text-base-content/50': !cell.isCurrentMonth }">
             {{ cell.date }}
@@ -59,6 +67,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </div>
@@ -73,6 +82,8 @@ interface Props {
   month: number;
   events: any[];
   categories: Category[];
+  startDate?: Date;
+  endDate?: Date;
 }
 
 interface Emits {
@@ -84,21 +95,30 @@ const emit = defineEmits<Emits>();
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const calendarCells = computed(() => {
+const calendarRows = computed(() => {
   const firstDay = new Date(props.year, props.month, 1);
   const lastDay = new Date(props.year, props.month + 1, 0);
   const startDate = new Date(firstDay);
   startDate.setDate(startDate.getDate() - firstDay.getDay());
   
-  const cells = [];
+  const allCells = [];
   const today = new Date();
   
+  // Generate all calendar cells
   for (let i = 0; i < 42; i++) {
     const cellDate = new Date(startDate);
     cellDate.setDate(startDate.getDate() + i);
     
     const isCurrentMonth = cellDate.getMonth() === props.month;
     const isToday = cellDate.toDateString() === today.toDateString();
+    
+    // Check if this cell should be visible based on date range
+    let isVisible = isCurrentMonth;
+    if (props.startDate && props.endDate) {
+      isVisible = isCurrentMonth && 
+                  cellDate >= props.startDate && 
+                  cellDate <= props.endDate;
+    }
     
     // Get events for this day
     const dayEvents = props.events.filter(event => {
@@ -109,16 +129,28 @@ const calendarCells = computed(() => {
     // Calculate category percentages
     const categoryPercentages = calculateCategoryPercentages(dayEvents);
     
-    cells.push({
+    allCells.push({
       date: cellDate.getDate(),
       isCurrentMonth,
+      isVisible,
       isToday,
       dayEvents,
       categoryPercentages
     });
   }
   
-  return cells;
+  // Group cells into rows of 7 and filter out rows with no visible cells
+  const rows = [];
+  for (let i = 0; i < 6; i++) {
+    const row = allCells.slice(i * 7, (i + 1) * 7);
+    const hasVisibleCells = row.some(cell => cell.isVisible);
+    
+    if (hasVisibleCells) {
+      rows.push(row);
+    }
+  }
+  
+  return rows;
 });
 
 function calculateCategoryPercentages(events: any[]) {
