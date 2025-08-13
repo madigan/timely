@@ -50,15 +50,29 @@ function generateRandomEvents(calendarId: string, count: number): CalendarEvent[
     { summary: "Vacation Bible School", location: "Various Rooms", description: "Summer program for children and families" }
   ];
 
+  // Generate events for current and next month
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
   for (let i = 0; i < count; i++) {
     const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-    const day = Math.floor(Math.random() * 31) + 1;
+    
+    // Randomly place events in current month (60%) or next month (40%)
+    const useCurrentMonth = Math.random() > 0.4;
+    const targetMonth = useCurrentMonth ? currentMonth : (currentMonth === 11 ? 0 : currentMonth + 1);
+    const targetYear = useCurrentMonth ? currentYear : (currentMonth === 11 ? currentYear + 1 : currentYear);
+    
+    // Get valid days for the target month
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const day = Math.floor(Math.random() * daysInMonth) + 1;
+    
     const hour = Math.floor(Math.random() * 12) + 8; // 8 AM to 7 PM
     const minute = Math.random() > 0.5 ? 0 : 30;
     const duration = Math.random() > 0.5 ? 1 : 2; // 1 or 2 hours
 
-    const startDate = `2025-08-${day.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
-    const endDate = `2025-08-${day.toString().padStart(2, '0')}T${(hour + duration).toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+    const startDate = `${targetYear}-${(targetMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+    const endDate = `${targetYear}-${(targetMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${(hour + duration).toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
 
     events.push({
       id: `${calendarId}-event-${i + 1}`,
@@ -79,14 +93,14 @@ const dummyCalendars: Calendar[] = [
     summary: "Main Church Calendar",
     primary: true,
     backgroundColor: "#3B82F6",
-    isEnabled: false,
+    isEnabled: true,
     events: generateRandomEvents("church-main", 85)
   },
   {
     id: "youth-ministry",
     summary: "Youth Ministry",
     backgroundColor: "#10B981",
-    isEnabled: false,
+    isEnabled: true,
     events: generateRandomEvents("youth-ministry", 45)
   },
   {
