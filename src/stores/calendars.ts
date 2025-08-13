@@ -6,6 +6,7 @@ export interface Calendar {
   summary: string;
   primary?: boolean;
   backgroundColor?: string;
+  isEnabled?: boolean;
   events?: CalendarEvent[];
 }
 
@@ -78,24 +79,28 @@ const dummyCalendars: Calendar[] = [
     summary: "Main Church Calendar",
     primary: true,
     backgroundColor: "#3B82F6",
+    isEnabled: false,
     events: generateRandomEvents("church-main", 85)
   },
   {
     id: "youth-ministry",
     summary: "Youth Ministry",
     backgroundColor: "#10B981",
+    isEnabled: false,
     events: generateRandomEvents("youth-ministry", 45)
   },
   {
     id: "worship-team",
     summary: "Worship & Music",
     backgroundColor: "#8B5CF6",
+    isEnabled: false,
     events: generateRandomEvents("worship-team", 62)
   },
   {
     id: "community-outreach",
     summary: "Community Outreach",
     backgroundColor: "#F59E0B",
+    isEnabled: false,
     events: generateRandomEvents("community-outreach", 38)
   }
 ];
@@ -116,9 +121,22 @@ export const useCalendarStore = defineStore("calendar", () => {
     return calendar?.events || [];
   }
 
+  function toggleCalendar(calendarId: string) {
+    const calendar = calendars.value.find(cal => cal.id === calendarId);
+    if (calendar) {
+      calendar.isEnabled = !calendar.isEnabled;
+    }
+  }
+
+  function getEnabledCalendars() {
+    return calendars.value.filter(cal => cal.isEnabled);
+  }
+
   return {
     calendars,
     getCalendars,
     getEvents,
+    toggleCalendar,
+    getEnabledCalendars,
   };
 });
