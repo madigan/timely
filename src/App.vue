@@ -31,5 +31,21 @@ import Footer from "./components/Footer.vue";
     color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  
+  /* Prevent page breaks inside calendar elements */
+  .calendar-month-container {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  
+  .calendar-row {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  
+  .calendar-cell {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 }
 </style>

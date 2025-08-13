@@ -12,12 +12,12 @@
       <div 
         v-for="(row, rowIndex) in calendarRows" 
         :key="rowIndex"
-        class="grid grid-cols-7 gap-1"
+        class="grid grid-cols-7 gap-1 calendar-row"
       >
         <div 
           v-for="cell in row" 
           :key="`${cell.date}-${cell.isCurrentMonth}`"
-          class="aspect-square border rounded p-1 flex flex-col transition-colors"
+          class="aspect-square border rounded p-1 flex flex-col transition-colors calendar-cell"
           :class="{
             'border-base-300 cursor-pointer hover:bg-base-300/50': cell.isVisible,
             'border-transparent': !cell.isVisible,
