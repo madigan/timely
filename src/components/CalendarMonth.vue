@@ -52,17 +52,20 @@
                 :title="`${categoryInfo.name} (${categoryInfo.percentage}%)`"
               >{{ categoryInfo.percentage }}%</span>
               <div 
-                class="flex-1 relative"
+                class="flex-1 relative overflow-hidden"
                 :title="`${categoryInfo.name} (${categoryInfo.percentage}%)`"
               >
                 <div
-                  class="h-1 rounded-full"
+                  class="h-3 rounded-full"
                   :style="{ 
                     backgroundColor: categoryInfo.color,
                     width: `${categoryInfo.percentage}%`,
-                    minWidth: '6px'
+                    minWidth: '12px'
                   }"
                 ></div>
+                <span class="absolute inset-0 text-xs text-base-content font-medium px-1 leading-3 flex items-center  whitespace-nowrap text-ellipsis">
+                  {{ categoryInfo.name }}
+                </span>
               </div>
             </div>
           </div>

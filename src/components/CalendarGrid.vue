@@ -1,11 +1,16 @@
 <template>
   <div class="p-8 max-w-7xl mx-auto">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-4">Calendar Overview</h1>
-      <p class="text-base-content/70 mb-6">View your church events across enabled calendars</p>
+      <h1 class="text-3xl font-bold mb-4 print:text-2xl print:mb-2">Calendar Overview</h1>
+      <p class="text-base-content/70 mb-6 print:hidden">View your church events across enabled calendars</p>
+      
+      <!-- Print-only date range display -->
+      <div class="hidden print:block mb-4">
+        <p class="text-lg font-medium">{{ formatDateRange(fromDate, toDate) }}</p>
+      </div>
       
       <!-- Date Range Controls -->
-      <div class="bg-base-100 rounded-lg p-4 shadow-sm">
+      <div class="bg-base-100 rounded-lg p-4 shadow-sm print:hidden">
         <div class="flex flex-col sm:flex-row gap-4 items-center">
           <div class="flex items-center gap-2">
             <label class="text-sm font-medium">From:</label>
@@ -35,11 +40,11 @@
       </div>
     </div>
     
-    <div class="space-y-4">
+    <div class="space-y-4 print:space-y-2">
       <div 
         v-for="month in monthsInRange" 
         :key="`${month.year}-${month.month}`"
-        class="bg-base-100 rounded-lg p-4 shadow-sm"
+        class="bg-base-100 rounded-lg p-4 shadow-sm print:shadow-none print:border print:border-gray-300 print:p-3"
       >
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-lg font-semibold">{{ month.name }} {{ month.year }}</h2>
@@ -58,7 +63,7 @@
     </div>
     
     <!-- Legend -->
-    <div class="mt-8 bg-base-100 rounded-lg p-6 shadow-sm">
+    <div class="mt-8 bg-base-100 rounded-lg p-6 shadow-sm print:hidden">
       <h3 class="text-lg font-semibold mb-4">Category Legend</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div v-for="category in categories" :key="category.id" class="flex items-center space-x-2">
@@ -376,15 +381,26 @@ function closeModal() {
 }
 
 function formatSelectedDate(dayCell: any) {
-  // Create date based on the current calendar context
-  const year = dayCell.isCurrentMonth === false ? 
-    (currentMonth.value === 11 ? currentYear.value + 1 : currentYear.value) :
-    currentYear.value;
-  const month = dayCell.isCurrentMonth === false ?
-    (currentMonth.value === 11 ? 0 : currentMonth.value + 1) :
-    currentMonth.value;
+  // Find the month that contains this day cell
+  for (const month of monthsInRange.value) {
+    const monthStart = new Date(month.year, month.month, 1);
+    const monthEnd = new Date(month.year, month.month + 1, 0);
+    const cellDate = new Date(month.year, month.month, dayCell.date);
+    
+    if (cellDate >= monthStart && cellDate <= monthEnd) {
+      return cellDate.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+  }
   
-  const date = new Date(year, month, dayCell.date);
+  // Fallback: use current date context
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const date = new Date(currentYear, currentMonth, dayCell.date);
   return date.toLocaleDateString('en-US', { 
     weekday: 'long',
     year: 'numeric', 
