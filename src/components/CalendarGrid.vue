@@ -17,6 +17,7 @@
           :month="currentMonth" 
           :events="currentMonthEvents"
           :categories="categories"
+          @dayClick="showDayDetails"
         />
       </div>
       
@@ -31,6 +32,7 @@
           :month="nextMonth" 
           :events="nextMonthEvents"
           :categories="categories"
+          @dayClick="showDayDetails"
         />
       </div>
     </div>
@@ -48,6 +50,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Day Details Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showModal }">
+      <div class="modal-box max-w-md">
+        <h3 class="font-bold text-lg mb-4">
+          {{ selectedDay ? formatSelectedDate(selectedDay) : '' }}
+        </h3>
+        
+        <div v-if="selectedDay" class="space-y-4">
+          <div class="text-sm text-base-content/70 mb-4">
+            {{ selectedDay.dayEvents.length }} event{{ selectedDay.dayEvents.length !== 1 ? 's' : '' }} scheduled
+          </div>
+          
+          <div class="space-y-3">
+            <div 
+              v-for="categoryInfo in selectedDay.categoryPercentages" 
+              :key="categoryInfo.id"
+              class="flex items-center space-x-3"
+            >
+              <div class="flex items-center space-x-2 w-24">
+                <span class="text-sm font-medium">{{ categoryInfo.percentage }}%</span>
+              </div>
+              <div class="flex-1 flex items-center space-x-2">
+                <div
+                  class="h-3 rounded-full"
+                  :style="{ 
+                    backgroundColor: categoryInfo.color,
+                    width: `${categoryInfo.percentage}%`,
+                    minWidth: '12px'
+                  }"
+                ></div>
+                <span class="text-sm">{{ categoryInfo.name }}</span>
+              </div>
+              <div class="text-xs text-base-content/70">
+                {{ categoryInfo.count }} event{{ categoryInfo.count !== 1 ? 's' : '' }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-action">
+          <button class="btn" @click="closeModal">Close</button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="closeModal">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
@@ -62,6 +112,8 @@ const categoryStore = useCategoryStore();
 
 const currentMonthEvents = ref<any[]>([]);
 const nextMonthEvents = ref<any[]>([]);
+const showModal = ref(false);
+const selectedDay = ref<any>(null);
 
 const now = new Date();
 const currentYear = ref(now.getFullYear());
@@ -114,6 +166,34 @@ async function loadEvents() {
   nextMonthEvents.value = allEvents.filter(event => {
     const eventDate = new Date(event.start.dateTime || event.start.date);
     return eventDate >= nextMonthStart && eventDate <= nextMonthEnd;
+  });
+}
+
+function showDayDetails(dayCell: any) {
+  selectedDay.value = dayCell;
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+  selectedDay.value = null;
+}
+
+function formatSelectedDate(dayCell: any) {
+  // Create date based on the current calendar context
+  const year = dayCell.isCurrentMonth === false ? 
+    (currentMonth.value === 11 ? currentYear.value + 1 : currentYear.value) :
+    currentYear.value;
+  const month = dayCell.isCurrentMonth === false ?
+    (currentMonth.value === 11 ? 0 : currentMonth.value + 1) :
+    currentMonth.value;
+  
+  const date = new Date(year, month, dayCell.date);
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
   });
 }
 </script>

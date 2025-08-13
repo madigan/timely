@@ -12,15 +12,24 @@
       <div 
         v-for="cell in calendarCells" 
         :key="`${cell.date}-${cell.isCurrentMonth}`"
-        class="aspect-square border border-base-300 rounded p-1 flex flex-col"
+        class="aspect-square border border-base-300 rounded p-1 flex flex-col cursor-pointer hover:bg-base-300/50 transition-colors"
         :class="{
           'bg-base-200': !cell.isCurrentMonth,
           'bg-base-100': cell.isCurrentMonth,
           'ring-2 ring-primary': cell.isToday
         }"
+        @click="cell.isCurrentMonth && cell.dayEvents.length > 0 ? $emit('dayClick', cell) : null"
       >
-        <div class="text-xs font-medium mb-1" :class="{ 'text-base-content/50': !cell.isCurrentMonth }">
-          {{ cell.date }}
+        <div class="flex items-start justify-between mb-1">
+          <div class="text-xs font-medium" :class="{ 'text-base-content/50': !cell.isCurrentMonth }">
+            {{ cell.date }}
+          </div>
+          <div 
+            v-if="cell.isCurrentMonth && cell.dayEvents.length > 0" 
+            class="badge badge-primary badge-xs"
+          >
+            {{ cell.dayEvents.length }}
+          </div>
         </div>
         
         <div v-if="cell.isCurrentMonth && cell.dayEvents.length > 0" class="flex-1 flex flex-col justify-end">
@@ -28,24 +37,26 @@
             <div 
               v-for="categoryInfo in cell.categoryPercentages" 
               :key="categoryInfo.id"
-              class="flex items-center space-x-1"
-              :title="`${categoryInfo.name}: ${categoryInfo.count} events (${categoryInfo.percentage}%)`"
+              class="flex items-center space-x-1 leading-none"
             >
-              <span class="text-xs text-base-content/70 w-8 text-right">{{ categoryInfo.percentage }}%</span>
-              <div class="flex-1 relative">
+              <span 
+                class="text-xs text-base-content/70 w-7 text-right leading-none"
+                :title="`${categoryInfo.name} (${categoryInfo.percentage}%)`"
+              >{{ categoryInfo.percentage }}%</span>
+              <div 
+                class="flex-1 relative"
+                :title="`${categoryInfo.name} (${categoryInfo.percentage}%)`"
+              >
                 <div
-                  class="h-1.5 rounded-full"
+                  class="h-1 rounded-full"
                   :style="{ 
                     backgroundColor: categoryInfo.color,
                     width: `${categoryInfo.percentage}%`,
-                    minWidth: '8px'
+                    minWidth: '6px'
                   }"
                 ></div>
               </div>
             </div>
-          </div>
-          <div class="text-xs text-center mt-1 text-base-content/70">
-            {{ cell.dayEvents.length }}
           </div>
         </div>
       </div>
@@ -64,7 +75,12 @@ interface Props {
   categories: Category[];
 }
 
+interface Emits {
+  (e: 'dayClick', cell: any): void;
+}
+
 const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -116,19 +132,40 @@ function calculateCategoryPercentages(events: any[]) {
     categoryCounts[category.id] = (categoryCounts[category.id] || 0) + 1;
   });
   
-  // Convert to percentages and include category info
-  return Object.entries(categoryCounts).map(([categoryId, count]) => {
+  // Convert to array with category info
+  const categoryResults = Object.entries(categoryCounts).map(([categoryId, count]) => {
     const category = props.categories.find(cat => cat.id === categoryId);
     const percentage = Math.round((count / events.length) * 100);
     
     return {
       id: categoryId,
       name: category?.name || 'Other',
-      color: category?.color || '#gray',
+      color: category?.color || '#64748b',
       count,
       percentage
     };
   }).sort((a, b) => b.count - a.count);
+  
+  // If more than 4 categories, combine smaller ones into "Other"
+  if (categoryResults.length > 4) {
+    const top3 = categoryResults.slice(0, 3);
+    const remainder = categoryResults.slice(3);
+    
+    const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0);
+    const otherPercentage = Math.round((otherCount / events.length) * 100);
+    
+    const other = {
+      id: 'other',
+      name: 'Other',
+      color: '#64748b',
+      count: otherCount,
+      percentage: otherPercentage
+    };
+    
+    return [...top3, other];
+  }
+  
+  return categoryResults;
 }
 
 function categorizeEvent(event: any): Category {

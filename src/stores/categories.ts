@@ -34,6 +34,12 @@ export const useCategoryStore = defineStore("settings", () => {
       color: "#8B5CF6",
       keywords: ["bible", "study", "school", "training", "children"],
     },
+    {
+      id: "music",
+      name: "Music & Arts",
+      color: "#EC4899",
+      keywords: ["choir", "practice", "music", "arts", "concert", "rehearsal"],
+    },
   ]);
 
   function addCategory(category: Omit<Category, "id">) {
