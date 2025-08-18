@@ -170,8 +170,8 @@ const monthsInRange = computed(() => {
       // Filter events for this month within the date range
       const monthEvents = allEvents.value.filter(event => {
         const eventDate = new Date(event.start.dateTime || event.start.date);
-        return eventDate >= Math.max(monthStart, start) && 
-               eventDate <= Math.min(monthEnd, end);
+        return eventDate.getTime() >= Math.max(monthStart.getTime(), start.getTime()) && 
+               eventDate.getTime() <= Math.min(monthEnd.getTime(), end.getTime());
       });
       
       months.push({
@@ -239,7 +239,7 @@ const continuousCalendarRows = computed(() => {
       // Pad row to 7 cells if needed
       while (row.length < 7) {
         row.push({
-          date: '',
+          date: 0,
           fullDate: '',
           isCurrentMonth: false,
           isVisible: false,

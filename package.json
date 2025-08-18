@@ -21,6 +21,7 @@
     "vue3-google-login": "^2.0.34"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
     "@tailwindcss/vite": "^4.1.11",
     "@tsconfig/node22": "^22.0.2",
     "@types/jsdom": "^21.1.7",
