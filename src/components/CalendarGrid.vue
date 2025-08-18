@@ -50,26 +50,12 @@
         </div>
         
         <!-- Important Events Section -->
-        <div v-if="importantSettings.enabled && month.importantEvents.length > 0" class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg print:bg-white print:border-gray-300">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-orange-600">⭐</span>
-            <h3 class="text-sm font-semibold text-orange-800">Important Events This Month</h3>
-          </div>
-          <div class="space-y-1">
-            <div 
-              v-for="event in month.importantEvents" 
-              :key="event.id || event.summary"
-              class="flex items-start justify-between text-xs bg-white border border-orange-100 rounded px-2 py-1 print:border-gray-200"
-            >
-              <span class="font-medium text-orange-900 flex-1" :title="event.summary">
-                {{ shortenEventTitle(event.summary, 35) }}
-              </span>
-              <span class="text-orange-600 ml-2 whitespace-nowrap">
-                {{ formatEventDateTime(event) }}
-              </span>
-            </div>
-          </div>
-        </div>
+        <ImportantEventsAccordion 
+          :events="month.importantEvents" 
+          :enabled="importantSettings.enabled"
+          :month-key="`${month.year}-${month.month}`"
+          @event-expanded="onEventExpanded"
+        />
         
         <CalendarMonth 
           :year="month.year" 
@@ -152,8 +138,9 @@ import { ref, computed, onMounted } from "vue";
 import { useCalendarStore } from "@/stores/calendars";
 import { useCategoryStore, type Category } from "@/stores/categories";
 import { useImportantEventsStore } from "@/stores/importantEvents";
-import { filterImportantEvents, formatEventDateTime, shortenEventTitle } from "@/utils/events";
+import { filterImportantEvents } from "@/utils/events";
 import CalendarMonth from "./CalendarMonth.vue";
+import ImportantEventsAccordion from "./ImportantEventsAccordion.vue";
 
 const calendarStore = useCalendarStore();
 const categoryStore = useCategoryStore();
@@ -200,7 +187,11 @@ const monthsInRange = computed(() => {
       const monthEvents = allEvents.value.filter(event => {
         const eventDate = new Date(event.start.dateTime || event.start.date);
         const eventDateStr = eventDate.toISOString().split('T')[0];
-        return eventDateStr >= startDateStr && eventDateStr <= endDateStr;
+        // Check if event is within the date range AND within this specific month
+        return eventDateStr >= startDateStr && 
+               eventDateStr <= endDateStr &&
+               eventDateStr >= monthStartStr && 
+               eventDateStr <= monthEndStr;
       });
       
       // Get important events for this month
@@ -312,5 +303,10 @@ function formatSelectedDate(dayCell: any) {
     month: 'long', 
     day: 'numeric' 
   });
+}
+
+function onEventExpanded(eventId: string, monthKey: string) {
+  // Optional: Handle event expansion if needed for analytics or other purposes
+  // Currently not needed as the accordion component manages its own state
 }
 </script>

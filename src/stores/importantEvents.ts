@@ -15,9 +15,17 @@ export interface ImportantEventSettings {
 
 export const useImportantEventsStore = defineStore("importantEvents", () => {
   const settings = ref<ImportantEventSettings>({
-    keywords: ["important", "urgent", "critical", "deadline", "meeting", "board", "emergency"],
+    keywords: [
+      "important",
+      "urgent",
+      "critical",
+      "deadline",
+      "meeting",
+      "board",
+      "emergency",
+    ],
     enabled: true,
-    displayLimit: 5,
+    displayLimit: 3,
   });
 
   /**
@@ -61,7 +69,15 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
    */
   function resetToDefaults() {
     settings.value = {
-      keywords: ["important", "urgent", "critical", "deadline", "meeting", "board", "emergency"],
+      keywords: [
+        "important",
+        "urgent",
+        "critical",
+        "deadline",
+        "meeting",
+        "board",
+        "emergency",
+      ],
       enabled: true,
       displayLimit: 5,
     };
