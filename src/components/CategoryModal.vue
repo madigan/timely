@@ -31,6 +31,26 @@
 
         <div>
           <label class="label">
+            <span class="label-text">Target Percentage</span>
+          </label>
+          <div class="flex items-center space-x-2">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              class="input input-bordered flex-1"
+              v-model.number="form.target"
+              placeholder="10"
+            />
+            <span class="text-sm text-base-content/70">%</span>
+          </div>
+          <label class="label">
+            <span class="label-text-alt">Target percentage of time for this ministry category</span>
+          </label>
+        </div>
+
+        <div>
+          <label class="label">
             <span class="label-text">Keywords</span>
           </label>
           <div class="flex space-x-2 mb-2">
@@ -85,6 +105,7 @@ export interface CategoryFormData {
   name: string;
   color: string;
   keywords: string[];
+  target: number;
 }
 
 interface Props {
@@ -108,6 +129,7 @@ const form = ref<CategoryFormData>({
   name: "",
   color: "#3B82F6",
   keywords: [],
+  target: 10,
 });
 
 // Watch for changes to editingCategory to populate form
@@ -119,6 +141,7 @@ watch(
         name: category.name,
         color: category.color,
         keywords: [...category.keywords],
+        target: category.target,
       };
     } else {
       resetForm();
@@ -164,6 +187,7 @@ function resetForm() {
     name: "",
     color: "#3B82F6",
     keywords: [],
+    target: 10,
   };
   newKeyword.value = "";
 }
