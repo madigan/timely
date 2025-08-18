@@ -85,6 +85,99 @@
       </div>
     </div>
 
+    <!-- Important Events Section -->
+    <div class="bg-base-100 rounded-lg shadow-sm p-6 mt-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Important Events</h2>
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text mr-3">Enable</span>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary"
+              :checked="importantSettings.enabled"
+              @change="importantEventsStore.toggleEnabled()"
+            />
+          </label>
+        </div>
+      </div>
+      <p class="text-base-content/70 mb-6">
+        Configure keywords to automatically identify and highlight important
+        events at the beginning of each month
+      </p>
+
+      <div class="space-y-4">
+        <!-- Keywords Management -->
+        <div>
+          <label class="block text-sm font-medium mb-2"
+            >Important Keywords</label
+          >
+          <div class="flex gap-2 mb-3">
+            <input
+              v-model="newKeyword"
+              type="text"
+              placeholder="Enter keyword"
+              class="input input-bordered flex-1"
+              @keyup.enter="addKeyword"
+              :disabled="!importantSettings.enabled"
+            />
+            <button
+              class="btn btn-primary"
+              @click="addKeyword"
+              :disabled="!importantSettings.enabled || !newKeyword.trim()"
+            >
+              Add
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <div
+              v-for="keyword in importantSettings.keywords"
+              :key="keyword"
+              class="badge badge-outline gap-2"
+              :class="{ 'opacity-50': !importantSettings.enabled }"
+            >
+              {{ keyword }}
+              <button
+                class="text-xs hover:text-error"
+                @click="removeKeyword(keyword)"
+                :disabled="!importantSettings.enabled"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Display Limit -->
+        <div>
+          <label class="block text-sm font-medium mb-2">
+            Maximum events to show per month:
+            {{ importantSettings.displayLimit }}
+          </label>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            :value="importantSettings.displayLimit"
+            @input="updateDisplayLimit($event)"
+            class="range range-primary range-sm w-full"
+            :disabled="!importantSettings.enabled"
+          />
+        </div>
+
+        <!-- Reset Button -->
+        <div class="pt-4 border-t border-base-300">
+          <button
+            class="btn btn-outline btn-sm"
+            @click="resetImportantSettings"
+            :disabled="!importantSettings.enabled"
+          >
+            Reset to Defaults
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Add/Edit Category Modal -->
     <CategoryModal
       :is-open="showAddModal || showEditModal"
@@ -122,12 +215,14 @@
 import { ref, onMounted } from "vue";
 import { useCalendarStore } from "@/stores/calendars";
 import { useCategoryStore, type Category } from "@/stores/categories";
+import { useImportantEventsStore } from "@/stores/importantEvents";
 import CategoryModal, {
   type CategoryFormData,
 } from "@/components/CategoryModal.vue";
 
 const calendarStore = useCalendarStore();
 const settingsStore = useCategoryStore();
+const importantEventsStore = useImportantEventsStore();
 
 const calendars = ref<any[]>([]);
 const showAddModal = ref(false);
@@ -137,6 +232,10 @@ const editingCategory = ref<Category | null>(null);
 const categoryToDelete = ref<Category | null>(null);
 
 const { categories } = settingsStore;
+const { settings: importantSettings } = importantEventsStore;
+
+// Important events reactive variables
+const newKeyword = ref("");
 
 onMounted(async () => {
   calendars.value = await calendarStore.getCalendars();
@@ -172,5 +271,26 @@ function closeModal() {
   showAddModal.value = false;
   showEditModal.value = false;
   editingCategory.value = null;
+}
+
+// Important Events Functions
+function addKeyword() {
+  if (newKeyword.value.trim()) {
+    importantEventsStore.addKeyword(newKeyword.value.trim());
+    newKeyword.value = "";
+  }
+}
+
+function removeKeyword(keyword: string) {
+  importantEventsStore.removeKeyword(keyword);
+}
+
+function updateDisplayLimit(event: Event) {
+  const target = event.target as HTMLInputElement;
+  importantEventsStore.setDisplayLimit(parseInt(target.value));
+}
+
+function resetImportantSettings() {
+  importantEventsStore.resetToDefaults();
 }
 </script>

@@ -48,6 +48,29 @@
           <h2 class="text-lg font-semibold">{{ month.name }} {{ month.year }}</h2>
           <div v-if="month.isCurrent" class="badge badge-primary badge-sm">Current</div>
         </div>
+        
+        <!-- Important Events Section -->
+        <div v-if="importantSettings.enabled && month.importantEvents.length > 0" class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg print:bg-white print:border-gray-300">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-orange-600">⭐</span>
+            <h3 class="text-sm font-semibold text-orange-800">Important Events This Month</h3>
+          </div>
+          <div class="space-y-1">
+            <div 
+              v-for="event in month.importantEvents" 
+              :key="event.id || event.summary"
+              class="flex items-start justify-between text-xs bg-white border border-orange-100 rounded px-2 py-1 print:border-gray-200"
+            >
+              <span class="font-medium text-orange-900 flex-1" :title="event.summary">
+                {{ shortenEventTitle(event.summary, 35) }}
+              </span>
+              <span class="text-orange-600 ml-2 whitespace-nowrap">
+                {{ formatEventDateTime(event) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
         <CalendarMonth 
           :year="month.year" 
           :month="month.month" 
@@ -128,10 +151,13 @@
 import { ref, computed, onMounted } from "vue";
 import { useCalendarStore } from "@/stores/calendars";
 import { useCategoryStore, type Category } from "@/stores/categories";
+import { useImportantEventsStore } from "@/stores/importantEvents";
+import { filterImportantEvents, formatEventDateTime, shortenEventTitle } from "@/utils/events";
 import CalendarMonth from "./CalendarMonth.vue";
 
 const calendarStore = useCalendarStore();
 const categoryStore = useCategoryStore();
+const importantEventsStore = useImportantEventsStore();
 
 const showModal = ref(false);
 const selectedDay = ref<any>(null);
@@ -177,12 +203,18 @@ const monthsInRange = computed(() => {
         return eventDateStr >= startDateStr && eventDateStr <= endDateStr;
       });
       
+      // Get important events for this month
+      const importantEvents = importantSettings.enabled ? 
+        filterImportantEvents(monthEvents, importantSettings.keywords, importantSettings.displayLimit) : 
+        [];
+      
       months.push({
         year,
         month,
         name: current.toLocaleDateString('en-US', { month: 'long' }),
         isCurrent,
-        events: monthEvents
+        events: monthEvents,
+        importantEvents
       });
     }
     
@@ -193,6 +225,7 @@ const monthsInRange = computed(() => {
 });
 
 const { categories } = categoryStore;
+const { settings: importantSettings } = importantEventsStore;
 
 onMounted(async () => {
   await loadEvents();
