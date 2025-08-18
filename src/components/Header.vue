@@ -16,10 +16,11 @@ const { user, login, logout, isLoggedIn } = useAuthStore();
           <div
             tabindex="0"
             role="button"
-            class="btn btn-ghost btn-circle avatar"
+            class="btn btn-ghost btn-circle avatar avatar-placeholder"
           >
-            <div class="w-10 rounded-full">
-              <img :alt="user?.name" :src="user?.picture" />
+            <div class="w-10 rounded-full bg-neutral-500 text-neutral-content">
+              <!-- <img :alt="user?.name" :src="user?.picture" /> -->
+              <span class="text-xl">JL</span>
             </div>
           </div>
           <ul
