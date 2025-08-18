@@ -118,9 +118,14 @@ const calendarRows = computed(() => {
     // Check if this cell should be visible based on date range
     let isVisible = isCurrentMonth;
     if (props.startDate && props.endDate) {
+      // Compare date strings to avoid timezone issues
+      const cellDateStr = cellDate.toISOString().split('T')[0];
+      const startDateStr = props.startDate.toISOString().split('T')[0];
+      const endDateStr = props.endDate.toISOString().split('T')[0];
+      
       isVisible = isCurrentMonth && 
-                  cellDate >= props.startDate && 
-                  cellDate <= props.endDate;
+                  cellDateStr >= startDateStr && 
+                  cellDateStr <= endDateStr;
     }
     
     // Get events for this day
