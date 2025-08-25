@@ -164,41 +164,55 @@ const calendarRows = computed(() => {
 function calculateCategoryPercentages(events: any[]) {
   if (events.length === 0) return [];
   
-  const categoryCounts: { [key: string]: number } = {};
+  const categoryStats: { [key: string]: { hours: number; count: number } } = {};
+  let totalHours = 0;
   
-  // Count events by category
+  // Calculate hours by category
   events.forEach(event => {
     const category = categorizeEvent(event);
-    categoryCounts[category.id] = (categoryCounts[category.id] || 0) + 1;
+    const startTime = new Date(event.start.dateTime || event.start.date);
+    const endTime = new Date(event.end.dateTime || event.end.date);
+    const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    
+    if (!categoryStats[category.id]) {
+      categoryStats[category.id] = { hours: 0, count: 0 };
+    }
+    
+    categoryStats[category.id].hours += hours;
+    categoryStats[category.id].count += 1;
+    totalHours += hours;
   });
   
   // Convert to array with category info
-  const categoryResults = Object.entries(categoryCounts).map(([categoryId, count]) => {
+  const categoryResults = Object.entries(categoryStats).map(([categoryId, stats]) => {
     const category = props.categories.find(cat => cat.id === categoryId);
-    const percentage = Math.round((count / events.length) * 100);
+    const percentage = totalHours > 0 ? Math.round((stats.hours / totalHours) * 100) : 0;
     
     return {
       id: categoryId,
       name: category?.name || 'Other',
       color: category?.color || '#64748b',
-      count,
+      count: stats.count,
+      hours: stats.hours,
       percentage
     };
-  }).sort((a, b) => b.count - a.count);
+  }).sort((a, b) => b.hours - a.hours); // Sort by hours, not count
   
   // If more than 4 categories, combine smaller ones into "Other"
   if (categoryResults.length > 4) {
     const top3 = categoryResults.slice(0, 3);
     const remainder = categoryResults.slice(3);
     
+    const otherHours = remainder.reduce((sum, cat) => sum + cat.hours, 0);
     const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0);
-    const otherPercentage = Math.round((otherCount / events.length) * 100);
+    const otherPercentage = totalHours > 0 ? Math.round((otherHours / totalHours) * 100) : 0;
     
     const other = {
       id: 'other',
       name: 'Other',
       color: '#64748b',
       count: otherCount,
+      hours: otherHours,
       percentage: otherPercentage
     };
     
