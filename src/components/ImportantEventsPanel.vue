@@ -1,37 +1,42 @@
 <template>
-  <div v-if="enabled && events.length > 0" class="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg print:bg-white print:border-gray-300">
+  <div class="p-3 bg-info/10 border border-info/30 rounded-lg print:bg-white print:border-gray-300 h-full">
     <div class="flex items-center gap-2 mb-2">
-      <span class="text-warning">⭐</span>
-      <h3 class="text-sm font-semibold text-warning-content">Important Events This Month</h3>
+      <span class="text-info">⭐</span>
+      <h3 class="text-sm font-semibold text-info-content">Important Events</h3>
     </div>
-    <TransitionGroup 
+    
+    <div v-if="events.length === 0" class="flex items-center justify-center h-20 text-sm text-base-content/50">
+      No important events in this timeframe.
+    </div>
+    
+    <TransitionGroup v-else 
       name="accordion-list"
       tag="div" 
       class="space-y-1"
       move-class="transition-transform duration-300 ease-out"
     >
-      <div 
-        v-for="event in events" 
-        :key="event.id || event.summary"
-        class="bg-base-100 border border-warning/20 rounded overflow-hidden print:border-gray-200"
-      >
+       <div 
+         v-for="event in events" 
+         :key="event.id || event.summary"
+         class="bg-base-100 border border-info/20 rounded overflow-hidden print:border-gray-200"
+       >
         <!-- Accordion Header -->
-        <div 
-          class="flex items-center justify-between text-xs px-2 py-1 cursor-pointer hover:bg-warning/10 transition-colors"
-          @click="toggleEventExpansion(event.id || event.summary)"
-        >
+         <div 
+           class="flex items-center justify-between text-xs px-2 py-1 cursor-pointer hover:bg-info/10 transition-colors"
+           @click="toggleEventExpansion(event.id || event.summary)"
+         >
           <div class="flex items-center gap-2 flex-1">
-            <span 
-              class="text-warning transition-transform duration-200"
-              :class="{ 'rotate-90': isEventExpanded(event.id || event.summary) }"
-            >
+             <span 
+               class="text-info transition-transform duration-200"
+               :class="{ 'rotate-90': isEventExpanded(event.id || event.summary) }"
+             >
               ▶
             </span>
             <span class="font-medium text-base-content flex-1" :title="event.summary">
               {{ shortenEventTitle(event.summary, 30) }}
             </span>
           </div>
-          <span class="text-warning ml-2 whitespace-nowrap">
+           <span class="text-info ml-2 whitespace-nowrap">
             {{ formatEventDateTime(event) }}
           </span>
         </div>
@@ -48,14 +53,14 @@
         >
           <div 
             v-if="isEventExpanded(event.id || event.summary)"
-            class="px-2 pb-2 pt-1 bg-warning/5 border-t border-warning/20 text-xs overflow-hidden"
+            class="px-2 pb-2 pt-1 bg-info/5 border-t border-info/20 text-xs overflow-hidden"
           >
             <div v-if="event.location" class="mb-1">
-              <span class="font-medium text-warning-content">📍 Location:</span>
+               <span class="font-medium text-info-content">📍 Location:</span>
               <span class="text-base-content/80 ml-1">{{ event.location }}</span>
             </div>
             <div v-if="event.description" class="text-base-content/80">
-              <span class="font-medium text-warning-content">📋 Description: </span>
+               <span class="font-medium text-info-content">📋 Description: </span>
               <span class="mt-1 text-base-content/70 leading-relaxed">{{ event.description }}</span>
             </div>
           </div>
@@ -71,7 +76,6 @@ import { formatEventDateTime, shortenEventTitle } from "@/utils/events";
 
 interface Props {
   events: any[];
-  enabled: boolean;
   monthKey: string;
 }
 

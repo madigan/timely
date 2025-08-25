@@ -198,5 +198,6 @@ When working with this codebase:
 8. **Maintain responsive design** - ensure mobile compatibility
 9. **Follow existing naming conventions** - kebab-case for files, camelCase for variables
 10. **Test type checking** - run `bun run type-check` after changes
+11. **Parent-controlled visibility** - whether a component should be displayed or hidden is determined by the parent component, not by conditional rendering within the component itself
 
 The codebase is well-structured and follows modern Vue 3 best practices with a focus on calendar management and event categorization for organizational time tracking.
