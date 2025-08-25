@@ -44,10 +44,21 @@
         :key="`${month.year}-${month.month}`"
         class="bg-base-100 rounded-lg p-4 shadow-sm print:shadow-none print:border print:border-gray-300 print:p-3 calendar-month-container"
       >
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold">{{ month.name }} {{ month.year }}</h2>
-          <div v-if="month.isCurrent" class="badge badge-primary badge-sm">Current</div>
-        </div>
+         <div class="flex items-center justify-between mb-3">
+           <h2 class="text-lg font-semibold">{{ month.name }} {{ month.year }}</h2>
+           <div class="flex items-center space-x-2">
+             <div v-if="month.isCurrent" class="badge badge-primary badge-sm">Current</div>
+             <button 
+               class="btn btn-primary btn-sm print:hidden"
+               @click="showMonthAnalytics(month)"
+               title="View month analytics"
+             >
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+               </svg>
+             </button>
+           </div>
+         </div>
         
         <!-- Important Events Section -->
         <ImportantEventsAccordion 
@@ -83,53 +94,61 @@
       </div>
     </div>
 
-    <!-- Day Details Modal -->
-    <dialog class="modal" :class="{ 'modal-open': showModal }">
-      <div class="modal-box max-w-md">
-        <h3 class="font-bold text-lg mb-4">
-          {{ selectedDay ? formatSelectedDate(selectedDay) : '' }}
-        </h3>
-        
-        <div v-if="selectedDay" class="space-y-4">
-          <div class="text-sm text-base-content/70 mb-4">
-            {{ selectedDay.dayEvents.length }} event{{ selectedDay.dayEvents.length !== 1 ? 's' : '' }} scheduled
-          </div>
-          
-          <div class="space-y-3">
-            <div 
-              v-for="categoryInfo in selectedDay.categoryPercentages" 
-              :key="categoryInfo.id"
-              class="flex items-center space-x-3"
-            >
-              <div class="flex items-center space-x-2 w-24">
-                <span class="text-sm font-medium">{{ categoryInfo.percentage }}%</span>
-              </div>
-              <div class="flex-1 flex items-center space-x-2">
-                <div
-                  class="h-3 rounded-full"
-                  :style="{ 
-                    backgroundColor: categoryInfo.color,
-                    width: `${categoryInfo.percentage}%`,
-                    minWidth: '12px'
-                  }"
-                ></div>
-                <span class="text-sm">{{ categoryInfo.name }}</span>
-              </div>
-              <div class="text-xs text-base-content/70">
-                {{ categoryInfo.count }} event{{ categoryInfo.count !== 1 ? 's' : '' }}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-action">
-          <button class="btn" @click="closeModal">Close</button>
-        </div>
-      </div>
-      <form method="dialog" class="modal-backdrop" @click="closeModal">
-        <button>close</button>
-      </form>
-    </dialog>
+     <!-- Day Details Modal -->
+     <dialog class="modal" :class="{ 'modal-open': showModal }">
+       <div class="modal-box max-w-md">
+         <h3 class="font-bold text-lg mb-4">
+           {{ selectedDay ? formatSelectedDate(selectedDay) : '' }}
+         </h3>
+         
+         <div v-if="selectedDay" class="space-y-4">
+           <div class="text-sm text-base-content/70 mb-4">
+             {{ selectedDay.dayEvents.length }} event{{ selectedDay.dayEvents.length !== 1 ? 's' : '' }} scheduled
+           </div>
+           
+           <div class="space-y-3">
+             <div 
+               v-for="categoryInfo in selectedDay.categoryPercentages" 
+               :key="categoryInfo.id"
+               class="flex items-center space-x-3"
+             >
+               <div class="flex items-center space-x-2 w-24">
+                 <span class="text-sm font-medium">{{ categoryInfo.percentage }}%</span>
+               </div>
+               <div class="flex-1 flex items-center space-x-2">
+                 <div
+                   class="h-3 rounded-full"
+                   :style="{ 
+                     backgroundColor: categoryInfo.color,
+                     width: `${categoryInfo.percentage}%`,
+                     minWidth: '12px'
+                   }"
+                 ></div>
+                 <span class="text-sm">{{ categoryInfo.name }}</span>
+               </div>
+               <div class="text-xs text-base-content/70">
+                 {{ categoryInfo.count }} event{{ categoryInfo.count !== 1 ? 's' : '' }}
+               </div>
+             </div>
+           </div>
+         </div>
+         
+         <div class="modal-action">
+           <button class="btn" @click="closeModal">Close</button>
+         </div>
+       </div>
+       <form method="dialog" class="modal-backdrop" @click="closeModal">
+         <button>close</button>
+       </form>
+     </dialog>
+
+     <!-- Month Analytics Modal -->
+     <MonthAnalyticsModal
+       :is-open="showAnalyticsModal"
+       :selected-month="selectedMonth"
+       :analytics="monthAnalytics"
+       @close="closeAnalyticsModal"
+     />
   </div>
 </template>
 
@@ -141,6 +160,7 @@ import { useImportantEventsStore } from "@/stores/importantEvents";
 import { filterImportantEvents } from "@/utils/events";
 import CalendarMonth from "./CalendarMonth.vue";
 import ImportantEventsAccordion from "./ImportantEventsAccordion.vue";
+import MonthAnalyticsModal from "./MonthAnalyticsModal.vue";
 
 const calendarStore = useCalendarStore();
 const categoryStore = useCategoryStore();
@@ -149,6 +169,9 @@ const importantEventsStore = useImportantEventsStore();
 const showModal = ref(false);
 const selectedDay = ref<any>(null);
 const allEvents = ref<any[]>([]);
+const showAnalyticsModal = ref(false);
+const selectedMonth = ref<any>(null);
+const monthAnalytics = ref<any[]>([]);
 
 // Date range controls
 const now = new Date();
@@ -308,5 +331,77 @@ function formatSelectedDate(dayCell: any) {
 function onEventExpanded(eventId: string, monthKey: string) {
   // Optional: Handle event expansion if needed for analytics or other purposes
   // Currently not needed as the accordion component manages its own state
+}
+
+function showMonthAnalytics(month: any) {
+  selectedMonth.value = month;
+  calculateMonthAnalytics(month);
+  showAnalyticsModal.value = true;
+}
+
+function closeAnalyticsModal() {
+  showAnalyticsModal.value = false;
+  selectedMonth.value = null;
+  monthAnalytics.value = [];
+}
+
+function calculateMonthAnalytics(month: any) {
+  // Get total hours for all events in the month
+  let totalHours = 0;
+  const categoryStats: { [key: string]: { hours: number; count: number; category: Category } } = {};
+  
+  // Initialize category stats
+  categories.forEach(category => {
+    categoryStats[category.id] = {
+      hours: 0,
+      count: 0,
+      category
+    };
+  });
+  
+  // Calculate hours for each event
+  month.events.forEach((event: any) => {
+    const startTime = new Date(event.start.dateTime || event.start.date);
+    const endTime = new Date(event.end.dateTime || event.end.date);
+    const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    
+    // Categorize event based on keywords
+    const matchedCategory = categorizeEvent(event);
+    if (matchedCategory) {
+      categoryStats[matchedCategory.id].hours += hours;
+      categoryStats[matchedCategory.id].count += 1;
+    }
+    
+    totalHours += hours;
+  });
+  
+  // Calculate analytics data
+  monthAnalytics.value = categories.map(category => {
+    const stats = categoryStats[category.id];
+    const actualPercentage = totalHours > 0 ? (stats.hours / totalHours) * 100 : 0;
+    
+    return {
+      id: category.id,
+      name: category.name,
+      color: category.color,
+      target: category.target,
+      actualPercentage,
+      eventCount: stats.count,
+      hours: stats.hours
+    };
+  });
+}
+
+function categorizeEvent(event: any): Category | null {
+  const eventText = ((event.summary || '') + ' ' + (event.description || '')).toLowerCase();
+  
+  // Find the first category whose keywords match the event
+  for (const category of categories) {
+    if (category.keywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
+      return category;
+    }
+  }
+  
+  return null;
 }
 </script>
