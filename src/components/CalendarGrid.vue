@@ -1,18 +1,12 @@
 <template>
   <div class="p-8 max-w-7xl mx-auto">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-4 print:text-2xl print:mb-2">
-        Calendar Overview
-      </h1>
-      <p class="text-base-content/70 mb-6 print:hidden">
-        View your church events across enabled calendars
-      </p>
-
+      <h1 class="text-3xl font-bold mb-4 print:hidden">Calendar Overview</h1>
+      <p class="text-base-content/70 mb-6 print:hidden">View your church events across enabled calendars</p>
+      
       <!-- Print-only date range display -->
-      <div class="hidden print:block mb-4">
-        <p class="text-lg font-medium">
-          {{ formatDateRange(fromDate, toDate) }}
-        </p>
+      <div class="hidden print:hidden mb-4">
+        <p class="text-lg font-medium">{{ formatDateRange(fromDate, toDate) }}</p>
       </div>
 
       <!-- Date Range Controls -->
@@ -45,7 +39,7 @@
       <div
         v-for="month in monthsInRange"
         :key="`${month.year}-${month.month}`"
-        class="bg-base-100 rounded-lg p-4 shadow-sm print:shadow-none print:border print:border-gray-300 print:p-3 calendar-month-container"
+        class="bg-base-100 rounded-lg p-4 shadow-sm print:shadow-none print:border-0 print:p-3 calendar-month-container"
       >
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-lg font-semibold">
