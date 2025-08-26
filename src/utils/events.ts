@@ -137,3 +137,57 @@ export function getWeekStartsInRange(startDate: Date, endDate: Date): Date[] {
   
   return weekStarts;
 }
+
+/**
+ * Categorize an event based on category keywords
+ * @param event - The event object with summary and description
+ * @param categories - Array of categories with keywords
+ * @returns The matching category or null if no match found
+ */
+export function categorizeEvent(event: any, categories: any[]): any | null {
+  const eventText = (
+    (event.summary || '') + ' ' + 
+    (event.description || '')
+  ).toLowerCase();
+  
+  // Find the first category whose keywords match the event
+  for (const category of categories) {
+    if (category.keywords.some((keyword: string) => 
+      eventText.includes(keyword.toLowerCase())
+    )) {
+      return category;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Calculate the duration of an event in hours
+ * @param event - The event object with start and end times
+ * @returns Duration in hours as a number
+ */
+export function calculateEventDuration(event: any): number {
+  const startTime = new Date(event.start.dateTime || event.start.date);
+  const endTime = new Date(event.end.dateTime || event.end.date);
+  return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+}
+
+/**
+ * Calculate percentage with consistent rounding
+ * @param value - The value to calculate percentage for
+ * @param total - The total value
+ * @returns Rounded percentage as integer
+ */
+export function calculatePercentage(value: number, total: number): number {
+  return total > 0 ? Math.round((value / total) * 100) : 0;
+}
+
+/**
+ * Format date as ISO string without time component
+ * @param date - Date to format
+ * @returns Date string in YYYY-MM-DD format
+ */
+export function formatDateString(date: Date): string {
+  return date.toISOString().split('T')[0];
+}

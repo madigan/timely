@@ -36,14 +36,14 @@ import Footer from "./components/Footer.vue";
   .calendar-month-container {
     page-break-before: always !important;
     page-break-after: avoid !important;
-    height: 98vh !important;
-    max-height: 98vh !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
     margin: 0 !important;
-    padding: 0.5rem !important;
-    display: flex !important;
-    flex-direction: column !important;
+    padding: 0.25rem !important;
+    display: grid !important;
+    grid-template-rows: auto 1fr !important;
     break-inside: avoid !important;
-    transform: scale(0.88) !important;
+    transform: scale(0.82) !important;
     transform-origin: top left !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
@@ -61,53 +61,57 @@ import Footer from "./components/Footer.vue";
   
   /* Month header should be compact but readable */
   .calendar-month-container h2 {
-    font-size: 1rem !important;
-    margin-bottom: 0.25rem !important;
-    margin-top: 0 !important;
-    padding: 0 !important;
-    flex-shrink: 0 !important;
+    font-size: 0.9rem !important;
+    margin: 0 !important;
+    padding: 0.125rem 0 !important;
     line-height: 1.2 !important;
+    grid-row: 1 !important;
   }
   
   /* Calendar should expand to fill remaining space */
   .calendar-month {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    grid-row: 2 !important;
+    display: grid !important;
+    grid-template-rows: auto 1fr !important;
+    gap: 0.125rem !important;
+    overflow: hidden !important;
   }
   
   /* Days of week header */
   .calendar-month > .grid:first-child {
-    flex-shrink: 0 !important;
-    margin-bottom: 0.25rem !important;
-    padding: 0.25rem 0 !important;
-    font-size: 0.75rem !important;
+    grid-row: 1 !important;
+    padding: 0.125rem 0 !important;
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
   }
   
   /* Calendar grid container should expand */
   .calendar-month > .space-y-1 {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    grid-row: 2 !important;
+    display: grid !important;
+    grid-template-rows: repeat(6, 1fr) !important;
+    gap: 0.0625rem !important;
+    overflow: hidden !important;
   }
   
   /* Each calendar row should take equal height */
   .calendar-row {
-    flex: 1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) 1fr !important;
+    gap: 0.0625rem !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    overflow: hidden !important;
   }
   
   /* Calendar cells should expand to fill row height */
   .calendar-cell {
-    height: 100% !important;
-    min-height: auto !important;
-    max-height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
-    padding: 0.125rem !important;
-    font-size: 0.7rem !important;
+    padding: 0.0625rem !important;
+    font-size: 0.6rem !important;
+    min-height: 0 !important;
   }
   
   /* Remove aspect-square constraint for print */
@@ -127,44 +131,50 @@ import Footer from "./components/Footer.vue";
   
   /* Weekly stats panel optimization for print */
   .weekly-stats-panel {
-    font-size: 0.7rem !important;
-    padding: 0.125rem !important;
+    font-size: 0.55rem !important;
+    padding: 0.0625rem !important;
     margin: 0 !important;
+    height: 100% !important;
     max-height: 100% !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   .weekly-stats-panel .space-y-1 > * {
-    margin-bottom: 0.125rem !important;
+    margin-bottom: 0.0625rem !important;
   }
   
   .weekly-stats-panel .text-xs {
-    font-size: 0.65rem !important;
+    font-size: 0.5rem !important;
+    line-height: 1.1 !important;
+  }
+  
+  /* Weekly stats column in grid */
+  .calendar-month .aspect-square:last-child {
+    aspect-ratio: auto !important;
+    display: flex !important;
+    align-items: stretch !important;
   }
   
   /* Ensure 8-column grid fits properly with consistent alignment */
   .grid-cols-8 {
-    grid-template-columns: repeat(7, 1fr) 1.2fr !important;
-    display: grid !important;
-  }
-  
-  /* Ensure all grid items align properly */
-  .calendar-month .grid {
+    grid-template-columns: repeat(7, 1fr) 1fr !important;
     display: grid !important;
   }
   
   /* Header row should maintain consistent column widths */
   .calendar-month > .grid:first-child {
-    grid-template-columns: repeat(7, 1fr) 1.2fr !important;
+    grid-template-columns: repeat(7, 1fr) 1fr !important;
   }
   
-  /* Reduce margins and gaps for print */
+  /* Remove spacing overrides - handled by grid */
   .calendar-month .gap-1 {
-    gap: 0.125rem !important;
+    gap: 0.0625rem !important;
   }
   
   .calendar-month .space-y-1 > * + * {
-    margin-top: 0.125rem !important;
+    margin-top: 0 !important;
   }
 }
 </style>

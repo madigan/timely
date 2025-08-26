@@ -92,7 +92,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Category } from "@/stores/categories";
-import { getEventsForWeek, getWeekStart } from "@/utils/events";
+import { getEventsForWeek, getWeekStart, categorizeEvent, calculateEventDuration, calculatePercentage, formatDateString } from "@/utils/events";
+import { DISPLAY_LIMITS } from "@/constants/display";
 import WeeklyStatsPanel from "./WeeklyStatsPanel.vue";
 
 interface Props {
@@ -134,9 +135,9 @@ const calendarRows = computed(() => {
     let isVisible = isCurrentMonth;
     if (props.startDate && props.endDate) {
       // Compare date strings to avoid timezone issues
-      const cellDateStr = cellDate.toISOString().split('T')[0];
-      const startDateStr = props.startDate.toISOString().split('T')[0];
-      const endDateStr = props.endDate.toISOString().split('T')[0];
+      const cellDateStr = formatDateString(cellDate);
+      const startDateStr = formatDateString(props.startDate);
+      const endDateStr = formatDateString(props.endDate);
       
       isVisible = isCurrentMonth && 
                   cellDateStr >= startDateStr && 
@@ -215,10 +216,10 @@ function calculateCategoryPercentages(events: any[]) {
   
   // Calculate hours by category
   events.forEach(event => {
-    const category = categorizeEvent(event);
-    const startTime = new Date(event.start.dateTime || event.start.date);
-    const endTime = new Date(event.end.dateTime || event.end.date);
-    const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    const category = categorizeEvent(event, props.categories);
+    if (!category) return;
+    
+    const hours = calculateEventDuration(event);
     
     if (!categoryStats[category.id]) {
       categoryStats[category.id] = { hours: 0, count: 0 };
@@ -232,7 +233,7 @@ function calculateCategoryPercentages(events: any[]) {
   // Convert to array with category info
   const categoryResults = Object.entries(categoryStats).map(([categoryId, stats]) => {
     const category = props.categories.find(cat => cat.id === categoryId);
-    const percentage = totalHours > 0 ? Math.round((stats.hours / totalHours) * 100) : 0;
+    const percentage = calculatePercentage(stats.hours, totalHours);
     
     return {
       id: categoryId,
@@ -242,16 +243,16 @@ function calculateCategoryPercentages(events: any[]) {
       hours: stats.hours,
       percentage
     };
-  }).sort((a, b) => b.hours - a.hours); // Sort by hours, not count
+  }).sort((a, b) => b.hours - a.hours);
   
-  // If more than 4 categories, combine smaller ones into "Other"
-  if (categoryResults.length > 4) {
-    const top3 = categoryResults.slice(0, 3);
-    const remainder = categoryResults.slice(3);
+  // If more than max categories, combine smaller ones into "Other"
+  if (categoryResults.length > DISPLAY_LIMITS.MAX_CATEGORIES_PER_DAY) {
+    const topCategories = categoryResults.slice(0, DISPLAY_LIMITS.TOP_CATEGORIES_TO_SHOW);
+    const remainder = categoryResults.slice(DISPLAY_LIMITS.TOP_CATEGORIES_TO_SHOW);
     
     const otherHours = remainder.reduce((sum, cat) => sum + cat.hours, 0);
     const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0);
-    const otherPercentage = totalHours > 0 ? Math.round((otherHours / totalHours) * 100) : 0;
+    const otherPercentage = calculatePercentage(otherHours, totalHours);
     
     const other = {
       id: 'other',
@@ -262,24 +263,10 @@ function calculateCategoryPercentages(events: any[]) {
       percentage: otherPercentage
     };
     
-    return [...top3, other];
+    return [...topCategories, other];
   }
   
   return categoryResults;
 }
 
-function categorizeEvent(event: any): Category {
-  const eventText = (event.summary + ' ' + (event.description || '')).toLowerCase();
-  
-  for (const category of props.categories) {
-    for (const keyword of category.keywords) {
-      if (eventText.includes(keyword.toLowerCase())) {
-        return category;
-      }
-    }
-  }
-  
-  // Default to first category if no match
-  return props.categories[0] || { id: 'default', name: 'Other', color: '#64748b', keywords: [] };
-}
 </script>

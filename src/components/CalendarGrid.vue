@@ -58,6 +58,7 @@
                 :events="month.importantEvents"
                 :month-key="`${month.year}-${month.month}`"
                 @event-expanded="onEventExpanded"
+                @open-settings="openImportantEventsSettings"
                 class="h-full"
               />
             </div>
@@ -70,6 +71,7 @@
                 month.categoryAnalytics.length > 0 || month.events.length > 0
               "
               :category-analytics="month.categoryAnalytics"
+              @open-settings="openCategorySettings"
             />
             <div
               v-else
@@ -166,6 +168,70 @@
         <button>close</button>
       </form>
     </dialog>
+
+    <!-- Important Events Settings Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showImportantEventsModal }">
+      <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">Important Events Settings</h3>
+        <ImportantEventsSettings />
+        <div class="modal-action">
+          <button class="btn" @click="closeImportantEventsModal">Close</button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="closeImportantEventsModal">
+        <button>close</button>
+      </form>
+    </dialog>
+
+    <!-- Category Settings Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showCategorySettingsModal }">
+      <div class="modal-box max-w-4xl">
+        <h3 class="font-bold text-lg mb-4">Category Settings</h3>
+        <CategorySettings
+          :categories="categories"
+          @add-category="showAddCategoryModal = true"
+          @edit-category="editCategory"
+          @delete-category="confirmDeleteCategory"
+        />
+        <div class="modal-action">
+          <button class="btn" @click="closeCategorySettingsModal">Close</button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="closeCategorySettingsModal">
+        <button>close</button>
+      </form>
+    </dialog>
+
+    <!-- Add/Edit Category Modal -->
+    <CategoryModal
+      :is-open="showAddCategoryModal || showEditCategoryModal"
+      :editing-category="editingCategory"
+      @close="closeCategoryModal"
+      @save="saveCategory"
+    />
+
+    <!-- Delete Category Confirmation Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showDeleteCategoryModal }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Confirm Deletion</h3>
+        <p class="py-4">
+          Are you sure you want to delete the category "{{
+            categoryToDelete?.name
+          }}"? This action cannot be undone.
+        </p>
+        <div class="modal-action">
+          <button class="btn" @click="showDeleteCategoryModal = false">Cancel</button>
+          <button class="btn btn-error" @click="deleteCategory">Delete</button>
+        </div>
+      </div>
+      <form
+        method="dialog"
+        class="modal-backdrop"
+        @click="showDeleteCategoryModal = false"
+      >
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
@@ -178,12 +244,22 @@ import { filterImportantEvents } from "@/utils/events";
 import CalendarMonth from "./CalendarMonth.vue";
 import ImportantEventsPanel from "./ImportantEventsPanel.vue";
 import MonthlyStatsPanel from "./MonthlyStatsPanel.vue";
+import ImportantEventsSettings from "./ImportantEventsSettings.vue";
+import CategorySettings from "./CategorySettings.vue";
+import CategoryModal, { type CategoryFormData } from "./CategoryModal.vue";
 
 const calendarStore = useCalendarStore();
 const categoryStore = useCategoryStore();
 const importantEventsStore = useImportantEventsStore();
 
 const showModal = ref(false);
+const showImportantEventsModal = ref(false);
+const showCategorySettingsModal = ref(false);
+const showAddCategoryModal = ref(false);
+const showEditCategoryModal = ref(false);
+const showDeleteCategoryModal = ref(false);
+const editingCategory = ref<Category | null>(null);
+const categoryToDelete = ref<Category | null>(null);
 const selectedDay = ref<any>(null);
 const allEvents = ref<any[]>([]);
 
@@ -327,6 +403,55 @@ function showDayDetails(dayCell: any) {
 function closeModal() {
   showModal.value = false;
   selectedDay.value = null;
+}
+
+function openImportantEventsSettings() {
+  showImportantEventsModal.value = true;
+}
+
+function closeImportantEventsModal() {
+  showImportantEventsModal.value = false;
+}
+
+function openCategorySettings() {
+  showCategorySettingsModal.value = true;
+}
+
+function closeCategorySettingsModal() {
+  showCategorySettingsModal.value = false;
+}
+
+function editCategory(category: Category) {
+  editingCategory.value = category;
+  showEditCategoryModal.value = true;
+}
+
+function confirmDeleteCategory(category: Category) {
+  categoryToDelete.value = category;
+  showDeleteCategoryModal.value = true;
+}
+
+function deleteCategory() {
+  if (categoryToDelete.value) {
+    categoryStore.deleteCategory(categoryToDelete.value.id);
+    showDeleteCategoryModal.value = false;
+    categoryToDelete.value = null;
+  }
+}
+
+function saveCategory(data: CategoryFormData) {
+  if (editingCategory.value) {
+    categoryStore.updateCategory(editingCategory.value.id, data);
+  } else {
+    categoryStore.addCategory(data);
+  }
+  closeCategoryModal();
+}
+
+function closeCategoryModal() {
+  showAddCategoryModal.value = false;
+  showEditCategoryModal.value = false;
+  editingCategory.value = null;
 }
 
 function formatSelectedDate(dayCell: any) {

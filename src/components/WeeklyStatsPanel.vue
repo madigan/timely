@@ -1,47 +1,81 @@
 <template>
-  <div class="weekly-stats-panel bg-base-200/30 rounded-lg p-2 text-xs border border-base-300 h-full flex flex-col">
+  <div
+    class="weekly-stats-panel bg-base-200/30 rounded-lg p-2 text-xs border border-base-300 h-full flex flex-col"
+  >
     <div class="font-medium text-center mb-1 text-base-content/80 text-xs">
       Week Stats
     </div>
-    
-    <div v-if="weeklyStats.length === 0" class="text-center text-base-content/50 py-2 flex-1 flex items-center justify-center">
+
+    <div
+      v-if="weeklyStats.length === 0"
+      class="text-center text-base-content/50 py-2 flex-1 flex items-center justify-center"
+    >
       <span class="text-xs">No events this week</span>
     </div>
-    
+
     <div v-else class="space-y-1 flex-1 overflow-hidden">
-      <div 
-        v-for="stat in weeklyStats" 
+      <div
+        v-for="stat in weeklyStats"
         :key="stat.id"
-        class="flex items-center justify-between gap-2"
+        class="flex items-center space-x-1 text-xs"
       >
-        <div class="flex items-center gap-1.5 min-w-0 flex-1">
-          <div 
-            class="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+        <!-- Category Label -->
+        <div class="flex items-center space-x-1 min-w-fit">
+          <div
+            class="w-1.5 h-1.5 rounded-full"
             :style="{ backgroundColor: stat.color }"
           ></div>
-          <span 
-            class="text-xs font-medium truncate" 
-            :title="stat.name"
+          <span class="font-medium truncate text-xs" :title="stat.name">{{
+            stat.name.substring(0, 2)
+          }}</span>
+        </div>
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+        <!-- Performance Stats -->
+        <div class="flex items-center space-x-1 min-w-fit">
+          <span class="font-medium text-xs"
+            >{{ Math.round(stat.actualPercentage) }}/{{ stat.target }}%</span
           >
-            {{ stat.name }}
+          <span
+            class="text-xs px-0.5 py-0.5 rounded text-white w-3 h-3 text-center flex items-center justify-center"
+            :class="{
+              'bg-success':
+                stat.actualPercentage >=
+                stat.target * PERFORMANCE_THRESHOLDS.EXCELLENT,
+              'bg-warning':
+                stat.actualPercentage >=
+                  stat.target * PERFORMANCE_THRESHOLDS.WARNING &&
+                stat.actualPercentage <
+                  stat.target * PERFORMANCE_THRESHOLDS.EXCELLENT,
+              'bg-error':
+                stat.actualPercentage <
+                stat.target * PERFORMANCE_THRESHOLDS.WARNING,
+            }"
+            :title="`${stat.eventCount} event${
+              stat.eventCount !== 1 ? 's' : ''
+            }, ${stat.hours.toFixed(1)}h`"
+          >
+            <span class="text-xs leading-none">{{
+              stat.actualPercentage >=
+              stat.target * PERFORMANCE_THRESHOLDS.EXCELLENT
+                ? "✓"
+                : stat.actualPercentage >=
+                  stat.target * PERFORMANCE_THRESHOLDS.WARNING
+                ? "!"
+                : "✗"
+            }}</span>
           </span>
         </div>
-        
-        <div class="flex items-center gap-2 flex-shrink-0">
-          <div class="text-xs font-mono text-base-content/70">
-            {{ stat.hours.toFixed(1) }}h
-          </div>
-          <div class="text-xs font-semibold text-primary min-w-[2rem] text-right">
-            {{ stat.percentage }}%
-          </div>
-        </div>
       </div>
-      
+
       <!-- Total hours at bottom -->
       <div class="border-t border-base-300 pt-1 mt-1 flex-shrink-0">
         <div class="flex justify-between items-center">
           <span class="text-xs font-medium text-base-content/60">Total</span>
-          <span class="text-xs font-mono font-semibold">{{ totalHours.toFixed(1) }}h</span>
+          <span class="text-xs font-mono font-semibold"
+            >{{ totalHours.toFixed(PRECISION.HOURS) }}h</span
+          >
         </div>
       </div>
     </div>
@@ -51,6 +85,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Category } from "@/stores/categories";
+import {
+  categorizeEvent,
+  calculateEventDuration,
+  calculatePercentage,
+} from "@/utils/events";
+import { PRECISION, PERFORMANCE_THRESHOLDS } from "@/constants/display";
 
 interface Props {
   weekEvents: any[];
@@ -61,81 +101,56 @@ const props = defineProps<Props>();
 
 const weeklyStats = computed(() => {
   if (props.weekEvents.length === 0) return [];
-  
-  const categoryStats: { [key: string]: { hours: number; count: number; category: Category } } = {};
-  let totalCategorizedHours = 0;
-  
+
+  const categoryStats: {
+    [key: string]: { hours: number; count: number; category: Category };
+  } = {};
+  let totalHours = 0;
+
   // Initialize category stats
-  props.categories.forEach(category => {
+  props.categories.forEach((category) => {
     categoryStats[category.id] = {
       hours: 0,
       count: 0,
-      category
+      category,
     };
   });
-  
+
   // Calculate hours for each event
-  props.weekEvents.forEach(event => {
-    const startTime = new Date(event.start.dateTime || event.start.date);
-    const endTime = new Date(event.end.dateTime || event.end.date);
-    const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-    
+  props.weekEvents.forEach((event) => {
+    const hours = calculateEventDuration(event);
+    totalHours += hours;
+
     // Categorize event based on keywords
-    const matchedCategory = categorizeEvent(event);
+    const matchedCategory = categorizeEvent(event, props.categories);
     if (matchedCategory) {
       categoryStats[matchedCategory.id].hours += hours;
       categoryStats[matchedCategory.id].count += 1;
-      totalCategorizedHours += hours;
     }
   });
-  
-  // Convert to array and filter out categories with no events
-  const activeCategories = props.categories
-    .map(category => {
+
+  // Convert to array and calculate actual vs target percentages
+  return props.categories
+    .map((category) => {
       const stats = categoryStats[category.id];
-      const percentage = totalCategorizedHours > 0 ? Math.round((stats.hours / totalCategorizedHours) * 100) : 0;
-      
+      const actualPercentage =
+        totalHours > 0 ? (stats.hours / totalHours) * 100 : 0;
+
       return {
         id: category.id,
         name: category.name,
         color: category.color,
         hours: stats.hours,
-        count: stats.count,
-        percentage
+        eventCount: stats.count,
+        actualPercentage,
+        target: category.target,
       };
     })
-    .filter(stat => stat.count > 0)
-    .sort((a, b) => b.hours - a.hours);
-
-  // Ensure percentages add up to 100% by adjusting the largest category
-  const totalPercentage = activeCategories.reduce((sum, stat) => sum + stat.percentage, 0);
-  if (activeCategories.length > 0 && totalPercentage !== 100) {
-    const adjustment = 100 - totalPercentage;
-    activeCategories[0].percentage += adjustment;
-  }
-
-  return activeCategories;
+    .filter((stat) => stat.eventCount > 0)
+    .sort((a, b) => b.target - a.target);
 });
 
 const totalHours = computed(() => {
   return weeklyStats.value.reduce((sum, stat) => sum + stat.hours, 0);
 });
-
-function categorizeEvent(event: any): Category | null {
-  const eventText = (
-    (event.summary || '') + ' ' + 
-    (event.description || '')
-  ).toLowerCase();
-  
-  // Find the first category whose keywords match the event
-  for (const category of props.categories) {
-    if (category.keywords.some(keyword => 
-      eventText.includes(keyword.toLowerCase())
-    )) {
-      return category;
-    }
-  }
-  
-  return null;
-}
 </script>
