@@ -87,3 +87,53 @@ export function shortenEventTitle(title: string, maxLength: number = 40): string
   if (!title) return '';
   return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
 }
+
+/**
+ * Get events that fall within a specific week
+ * @param events - Array of events to filter
+ * @param weekStart - Start date of the week (Sunday)
+ * @returns Array of events that occur within the specified week
+ */
+export function getEventsForWeek(events: any[], weekStart: Date): any[] {
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6); // Saturday
+  
+  return events.filter(event => {
+    const eventDate = new Date(event.start?.dateTime || event.start?.date);
+    const eventDateStr = eventDate.toISOString().split('T')[0];
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    
+    return eventDateStr >= weekStartStr && eventDateStr <= weekEndStr;
+  });
+}
+
+/**
+ * Get the start date of the week (Sunday) for a given date
+ * @param date - The date to find the week start for
+ * @returns Date object representing the Sunday of that week
+ */
+export function getWeekStart(date: Date): Date {
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() - date.getDay());
+  return weekStart;
+}
+
+/**
+ * Get all week start dates that occur within a date range
+ * @param startDate - Start of the date range
+ * @param endDate - End of the date range
+ * @returns Array of Date objects representing week starts (Sundays)
+ */
+export function getWeekStartsInRange(startDate: Date, endDate: Date): Date[] {
+  const weekStarts: Date[] = [];
+  const firstWeekStart = getWeekStart(startDate);
+  const current = new Date(firstWeekStart);
+  
+  while (current <= endDate) {
+    weekStarts.push(new Date(current));
+    current.setDate(current.getDate() + 7);
+  }
+  
+  return weekStarts;
+}

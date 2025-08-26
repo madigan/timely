@@ -1,9 +1,12 @@
 <template>
   <div class="calendar-month">
     <!-- Days of week header -->
-    <div class="grid grid-cols-7 gap-1 mb-2">
+    <div class="grid grid-cols-8 gap-1 mb-2">
       <div v-for="day in daysOfWeek" :key="day" class="text-center text-sm font-medium text-base-content/70 py-2">
         {{ day }}
+      </div>
+      <div class="text-center text-sm font-medium text-base-content/70 py-2">
+        Week Stats
       </div>
     </div>
     
@@ -12,7 +15,7 @@
       <div 
         v-for="(row, rowIndex) in calendarRows" 
         :key="rowIndex"
-        class="grid grid-cols-7 gap-1 calendar-row"
+        class="grid grid-cols-8 gap-1 calendar-row"
       >
         <div 
           v-for="cell in row" 
@@ -71,6 +74,16 @@
           </div>
         </div>
         </div>
+        
+        <!-- Weekly Stats Column -->
+        <div class="aspect-square border-l border-base-300 pl-1 flex">
+          <WeeklyStatsPanel
+            v-if="weeklyStatsData[rowIndex]"
+            :week-events="weeklyStatsData[rowIndex].weekEvents"
+            :categories="categories"
+            class="w-full"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -79,6 +92,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Category } from "@/stores/categories";
+import { getEventsForWeek, getWeekStart } from "@/utils/events";
+import WeeklyStatsPanel from "./WeeklyStatsPanel.vue";
 
 interface Props {
   year: number;
@@ -159,6 +174,37 @@ const calendarRows = computed(() => {
   }
   
   return rows;
+});
+
+const weeklyStatsData = computed(() => {
+  const rows = calendarRows.value;
+  const weeklyStats = [];
+  
+  for (const row of rows) {
+    // Get the first day of this row (Sunday)
+    const firstCell = row[0];
+    if (firstCell) {
+      // Calculate the actual date for the first cell
+      const firstDay = new Date(props.year, props.month, 1);
+      const startOfMonth = new Date(firstDay);
+      startOfMonth.setDate(startOfMonth.getDate() - firstDay.getDay());
+      
+      // Calculate week start based on row position
+      const rowIndex = rows.indexOf(row);
+      const weekStart = new Date(startOfMonth);
+      weekStart.setDate(startOfMonth.getDate() + (rowIndex * 7));
+      
+      // Get all events for this week using the utility function
+      const weekEvents = getEventsForWeek(props.events, weekStart);
+      
+      weeklyStats.push({
+        weekStart,
+        weekEvents
+      });
+    }
+  }
+  
+  return weeklyStats;
 });
 
 function calculateCategoryPercentages(events: any[]) {
