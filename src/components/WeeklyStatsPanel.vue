@@ -17,7 +17,7 @@
       <div
         v-for="stat in weeklyStats"
         :key="stat.id"
-        class="flex items-center space-x-1 text-xs"
+        class="flex items-center space-x-1 text-xs justify-between"
       >
         <!-- Category Label -->
         <div class="flex items-center space-x-1 min-w-fit">
@@ -26,12 +26,10 @@
             :style="{ backgroundColor: stat.color }"
           ></div>
           <span class="font-medium truncate text-xs" :title="stat.name">{{
-            stat.name.substring(0, 2)
+            stat.name.substring(0, 1)
           }}</span>
         </div>
 
-        <!-- Spacer -->
-        <div class="flex-1"></div>
         <!-- Performance Stats -->
         <div class="flex items-center space-x-1 min-w-fit">
           <span class="font-medium text-xs"

@@ -1,16 +1,15 @@
 <template>
-  <div class="p-8 max-w-7xl mx-auto">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-4 print:hidden">Calendar Overview</h1>
-      <p class="text-base-content/70 mb-6 print:hidden">View your church events across enabled calendars</p>
-      
-      <!-- Print-only date range display -->
-      <div class="hidden print:hidden mb-4">
-        <p class="text-lg font-medium">{{ formatDateRange(fromDate, toDate) }}</p>
-      </div>
+  <div
+    class="p-8 print:p-0 not-print:max-w-7xl print:w-screen h-full mx-auto"
+  >
+    <div class="mb-8 print:hidden">
+      <h1 class="text-3xl font-bold mb-4">Calendar Overview</h1>
+      <p class="text-base-content/70 mb-6">
+        View your church events across enabled calendars
+      </p>
 
       <!-- Date Range Controls -->
-      <div class="bg-base-100 rounded-lg p-4 shadow-sm print:hidden">
+      <div class="bg-base-100 rounded-lg p-4 shadow-sm">
         <div class="flex flex-col sm:flex-row gap-4 items-center">
           <div class="flex items-center gap-2">
             <label class="text-sm font-medium">From:</label>
@@ -35,7 +34,7 @@
       </div>
     </div>
 
-    <div class="space-y-4 print:space-y-2">
+    <div class="space-y-4 print:space-y-0">
       <div
         v-for="month in monthsInRange"
         :key="`${month.year}-${month.month}`"
@@ -178,7 +177,11 @@
           <button class="btn" @click="closeImportantEventsModal">Close</button>
         </div>
       </div>
-      <form method="dialog" class="modal-backdrop" @click="closeImportantEventsModal">
+      <form
+        method="dialog"
+        class="modal-backdrop"
+        @click="closeImportantEventsModal"
+      >
         <button>close</button>
       </form>
     </dialog>
@@ -197,7 +200,11 @@
           <button class="btn" @click="closeCategorySettingsModal">Close</button>
         </div>
       </div>
-      <form method="dialog" class="modal-backdrop" @click="closeCategorySettingsModal">
+      <form
+        method="dialog"
+        class="modal-backdrop"
+        @click="closeCategorySettingsModal"
+      >
         <button>close</button>
       </form>
     </dialog>
@@ -220,7 +227,9 @@
           }}"? This action cannot be undone.
         </p>
         <div class="modal-action">
-          <button class="btn" @click="showDeleteCategoryModal = false">Cancel</button>
+          <button class="btn" @click="showDeleteCategoryModal = false">
+            Cancel
+          </button>
           <button class="btn btn-error" @click="deleteCategory">Delete</button>
         </div>
       </div>
