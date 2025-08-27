@@ -15,7 +15,8 @@
     "cookie": "^1.0.2",
     "elysia": "^1.1.30",
     "google-auth-library": "^10.3.0",
-    "googleapis": "^158.0.0"
+    "googleapis": "^158.0.0",
+    "postgres": "^3.4.7"
   },
   "devDependencies": {
     "@types/bun": "latest",

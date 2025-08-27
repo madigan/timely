@@ -1,8 +1,24 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 
 const { user, login, logout, isLoggedIn } = useAuthStore();
+const imageError = ref(false);
+
+const handleImageError = () => {
+  imageError.value = true;
+};
+
+const getUserInitials = (name?: string) => {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
 </script>
 
 <template>
@@ -16,11 +32,22 @@ const { user, login, logout, isLoggedIn } = useAuthStore();
           <div
             tabindex="0"
             role="button"
-            class="btn btn-ghost btn-circle avatar avatar-placeholder"
+            class="btn btn-ghost btn-circle avatar"
           >
-            <div class="w-10 rounded-full bg-neutral-500 text-neutral-content">
-              <!-- <img :alt="user?.name" :src="user?.picture" /> -->
-              <span class="text-xl">JL</span>
+            <div class="w-10 rounded-full">
+              <img 
+                v-if="user?.picture && !imageError"
+                :alt="user?.name || 'User'" 
+                :src="user?.picture" 
+                class="rounded-full"
+                @error="handleImageError"
+              />
+              <div 
+                v-else
+                class="w-10 h-10 rounded-full bg-neutral text-neutral-content flex items-center justify-center"
+              >
+                <span class="text-sm font-medium">{{ getUserInitials(user?.name) }}</span>
+              </div>
             </div>
           </div>
           <ul

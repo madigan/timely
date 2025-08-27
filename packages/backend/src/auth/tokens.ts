@@ -1,18 +1,5 @@
-import { encryptToken, decryptToken } from './oauth.js';
-import fs from 'fs/promises';
-import path from 'path';
-
-// Simple file-based token storage (in production, use Redis or database)
-const TOKENS_DIR = path.join(process.cwd(), 'data', 'tokens');
-
-// Ensure tokens directory exists
-async function ensureTokensDir() {
-  try {
-    await fs.mkdir(TOKENS_DIR, { recursive: true });
-  } catch (error) {
-    // Directory already exists
-  }
-}
+import { encryptToken, decryptToken } from "./oauth.js";
+import { sql } from '../db/database.js';
 
 export interface UserTokens {
   userId: string;
@@ -26,32 +13,65 @@ export interface UserTokens {
 
 // Store encrypted tokens for a user
 export async function storeUserTokens(tokens: UserTokens): Promise<void> {
-  await ensureTokensDir();
-  
-  const encryptedTokens = {
-    ...tokens,
-    accessToken: encryptToken(tokens.accessToken),
-    refreshToken: tokens.refreshToken ? encryptToken(tokens.refreshToken) : undefined
-  };
-  
-  const filePath = path.join(TOKENS_DIR, `${tokens.userId}.json`);
-  await fs.writeFile(filePath, JSON.stringify(encryptedTokens, null, 2));
+  try {
+    const encryptedAccessToken = encryptToken(tokens.accessToken);
+    const encryptedRefreshToken = tokens.refreshToken ? encryptToken(tokens.refreshToken) : null;
+    
+    await sql`
+      INSERT INTO user_tokens 
+      (user_id, access_token, refresh_token, expiry_date, email, name, picture, updated_at)
+      VALUES (
+        ${tokens.userId},
+        ${encryptedAccessToken},
+        ${encryptedRefreshToken},
+        ${tokens.expiryDate || null},
+        ${tokens.email},
+        ${tokens.name},
+        ${tokens.picture},
+        CURRENT_TIMESTAMP
+      )
+      ON CONFLICT (user_id) 
+      DO UPDATE SET
+        access_token = EXCLUDED.access_token,
+        refresh_token = EXCLUDED.refresh_token,
+        expiry_date = EXCLUDED.expiry_date,
+        email = EXCLUDED.email,
+        name = EXCLUDED.name,
+        picture = EXCLUDED.picture,
+        updated_at = CURRENT_TIMESTAMP
+    `;
+  } catch (error) {
+    console.error('Error storing user tokens:', error);
+    throw error;
+  }
 }
 
 // Retrieve and decrypt tokens for a user
 export async function getUserTokens(userId: string): Promise<UserTokens | null> {
   try {
-    await ensureTokensDir();
-    const filePath = path.join(TOKENS_DIR, `${userId}.json`);
-    const fileContent = await fs.readFile(filePath, 'utf8');
-    const encryptedTokens = JSON.parse(fileContent);
+    const rows = await sql`
+      SELECT user_id, access_token, refresh_token, expiry_date, email, name, picture
+      FROM user_tokens 
+      WHERE user_id = ${userId}
+    `;
+    
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const row = rows[0];
     
     return {
-      ...encryptedTokens,
-      accessToken: decryptToken(encryptedTokens.accessToken),
-      refreshToken: encryptedTokens.refreshToken ? decryptToken(encryptedTokens.refreshToken) : undefined
+      userId: row.userId,
+      accessToken: decryptToken(row.accessToken),
+      refreshToken: row.refreshToken ? decryptToken(row.refreshToken) : undefined,
+      expiryDate: row.expiryDate || undefined,
+      email: row.email,
+      name: row.name,
+      picture: row.picture,
     };
   } catch (error) {
+    console.error('Error retrieving user tokens:', error);
     return null;
   }
 }
@@ -59,18 +79,20 @@ export async function getUserTokens(userId: string): Promise<UserTokens | null> 
 // Delete tokens for a user (logout)
 export async function deleteUserTokens(userId: string): Promise<void> {
   try {
-    await ensureTokensDir();
-    const filePath = path.join(TOKENS_DIR, `${userId}.json`);
-    await fs.unlink(filePath);
+    // Use a transaction to ensure both operations complete together
+    await sql.begin(async sql => {
+      await sql`DELETE FROM user_tokens WHERE user_id = ${userId}`;
+      await sql`DELETE FROM sessions WHERE user_id = ${userId}`;
+    });
   } catch (error) {
-    // File doesn't exist or already deleted
+    console.error('Error deleting user tokens:', error);
   }
 }
 
 // Check if tokens need refresh (expire within 5 minutes)
 export function needsRefresh(expiryDate?: number): boolean {
   if (!expiryDate) return true;
-  const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000);
+  const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000;
   return expiryDate < fiveMinutesFromNow;
 }
 
@@ -79,19 +101,51 @@ export function generateSessionId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
-// Simple in-memory session storage (in production, use Redis)
-export const sessions = new Map<string, string>(); // sessionId -> userId
-
-export function createSession(userId: string): string {
-  const sessionId = generateSessionId();
-  sessions.set(sessionId, userId);
-  return sessionId;
+// Create a new session
+export async function createSession(userId: string): Promise<string> {
+  try {
+    const sessionId = generateSessionId();
+    
+    await sql`
+      INSERT INTO sessions (session_id, user_id, expires_at)
+      VALUES (
+        ${sessionId}, 
+        ${userId}, 
+        CURRENT_TIMESTAMP + INTERVAL '30 days'
+      )
+    `;
+    
+    return sessionId;
+  } catch (error) {
+    console.error('Error creating session:', error);
+    throw error;
+  }
 }
 
-export function getSessionUserId(sessionId: string): string | null {
-  return sessions.get(sessionId) || null;
+// Get user ID from session
+export async function getSessionUserId(sessionId: string): Promise<string | null> {
+  try {
+    const rows = await sql`
+      SELECT user_id FROM sessions 
+      WHERE session_id = ${sessionId} 
+        AND expires_at > CURRENT_TIMESTAMP
+    `;
+    
+    return rows.length > 0 ? rows[0].userId : null;
+  } catch (error) {
+    console.error('Error getting session user ID:', error);
+    return null;
+  }
 }
 
-export function deleteSession(sessionId: string): void {
-  sessions.delete(sessionId);
+// Delete a session
+export async function deleteSession(sessionId: string): Promise<void> {
+  try {
+    await sql`
+      DELETE FROM sessions 
+      WHERE session_id = ${sessionId}
+    `;
+  } catch (error) {
+    console.error('Error deleting session:', error);
+  }
 }

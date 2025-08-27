@@ -45,10 +45,16 @@ export const useAuthStore = defineStore("auth", () => {
         credentials: 'include'
       });
       user.value = null;
+      
+      // Redirect to home page after logout
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
       // Clear local state even if server request fails
       user.value = null;
+      
+      // Still redirect to home even if logout request failed
+      window.location.href = '/';
     } finally {
       isLoading.value = false;
     }

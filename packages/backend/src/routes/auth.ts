@@ -132,7 +132,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       });
 
       // Create session
-      const sessionId = createSession(userInfo.id);
+      const sessionId = await createSession(userInfo.id);
       
       // Set session cookie using ElysiaJS built-in reactive cookies
       cookie.session.value = sessionId;
@@ -162,7 +162,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       return { error: 'Not authenticated' };
     }
 
-    const userId = getSessionUserId(sessionId);
+    const userId = await getSessionUserId(sessionId);
     if (!userId) {
       set.status = 401;
       return { error: 'Invalid session' };
@@ -181,13 +181,13 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     const sessionId = cookie.session.value;
     
     if (sessionId) {
-      const userId = getSessionUserId(sessionId);
+      const userId = await getSessionUserId(sessionId);
       
       if (userId) {
         // Delete stored tokens
         await deleteUserTokens(userId);
         // Delete session
-        deleteSession(sessionId);
+        await deleteSession(sessionId);
       }
     }
 
@@ -199,7 +199,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 // Middleware to check authentication
 export function requireAuth() {
   return new Elysia()
-    .derive(({ headers, set, cookie }) => {
+    .derive({ as: 'global' }, async ({ headers, set, cookie }) => {
       const sessionId = cookie.session.value;
       
       if (!sessionId) {
@@ -207,7 +207,7 @@ export function requireAuth() {
         throw new Error('Not authenticated');
       }
 
-      const userId = getSessionUserId(sessionId);
+      const userId = await getSessionUserId(sessionId);
       if (!userId) {
         set.status = 401;
         throw new Error('Invalid session');
