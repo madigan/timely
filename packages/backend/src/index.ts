@@ -3,6 +3,7 @@ import { staticPlugin } from '@elysiajs/static';
 import { cors } from '@elysiajs/cors';
 import { authRoutes } from './routes/auth.js';
 import { calendarRoutes } from './routes/calendar.js';
+import { categoryRoutes } from './routes/categories.js';
 
 const PORT = process.env.PORT || 3000;
 
@@ -20,6 +21,8 @@ const app = new Elysia({
   .use(authRoutes)
   // Calendar API routes
   .use(calendarRoutes)
+  // Categories API routes
+  .use(categoryRoutes)
   // Health check endpoint
   .get('/api/health', () => ({
     status: 'healthy',
