@@ -31,10 +31,11 @@ This project is structured as a monorepo with the following packages:
 - **AES-256-CBC** token encryption for secure storage
 
 ### Database
-- **PostgreSQL 15** with Docker Compose support
+- **PostgreSQL 15** with Docker Compose support (ephemeral for development)
 - **postgres.js** driver optimized for Bun
-- Automatic schema initialization and migrations
+- Automatic schema initialization and migrations with status tracking
 - Connection pooling and health checks
+- Migration system with parallel execution protection
 
 ## 📦 Installation
 
@@ -51,8 +52,7 @@ This will install dependencies for all packages in the workspace.
 
 **Option A: Docker Compose (Recommended)**
 ```bash
-# From the backend directory
-cd packages/backend
+# From the repository root
 docker compose up -d
 ```
 
@@ -177,7 +177,23 @@ This serves the built Vue app and API endpoints on `http://localhost:3000`.
 - `created_at`
 - `expires_at` (auto-expires after 30 days)
 
+**migrations** - Tracks database migrations:
+- `name` (PRIMARY KEY) - Migration filename
+- `status` - `IN_PROGRESS` or `COMPLETED`
+- `created_at`, `updated_at` - Timestamps
+
 ### Database Management
+
+**Migration Commands:**
+```bash
+# Run pending migrations
+bun run migrate:run
+
+# Check migration status
+bun run migrate:status
+```
+
+**Database Commands:**
 ```bash
 # Check database status
 docker compose ps
@@ -188,9 +204,14 @@ docker exec timely-postgres psql -U timely_user -d timely
 # View tables
 docker exec timely-postgres psql -U timely_user -d timely -c "\\dt"
 
+# Reset database (ephemeral - data will be lost)
+docker compose down && docker compose up -d
+
 # Stop database
 docker compose down
 ```
+
+**Note:** The development database is configured without persistent volumes, so data is reset each time the container restarts. This makes it easy to test migrations from a clean state.
 
 ## 🔌 API Endpoints
 
@@ -238,16 +259,21 @@ timely/
 │   │   │   │   ├── oauth.ts             # Google OAuth config
 │   │   │   │   └── tokens.ts            # Token management
 │   │   │   ├── db/              # Database layer
-│   │   │   │   └── database.ts          # PostgreSQL connection
+│   │   │   │   └── database.ts          # PostgreSQL connection & migrations
+│   │   │   ├── scripts/         # CLI utilities
+│   │   │   │   ├── migrate.ts           # Migration runner
+│   │   │   │   └── migrate-status.ts    # Migration status checker
+│   │   │   ├── migrations/      # Database migration files
+│   │   │   │   └── 202508271438.ts      # Initial schema migration
 │   │   │   ├── routes/          # API endpoints
 │   │   │   │   ├── auth.ts              # Auth routes
 │   │   │   │   └── calendar.ts          # Calendar routes
 │   │   │   ├── services/        # Business logic
 │   │   │   │   └── calendar.ts          # Google Calendar API
 │   │   │   └── index.ts         # Server entry point
-│   │   ├── docker-compose.yml   # PostgreSQL container
 │   │   └── static/              # Built frontend files
 │   └── shared/                   # Shared utilities
+├── docker-compose.yml            # PostgreSQL development database
 ├── Dockerfile                    # Production container
 ├── fly.toml                      # Fly.io deployment config
 └── package.json                  # Root workspace config

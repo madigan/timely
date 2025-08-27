@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "echo 'Backend build complete'",
-    "start": "bun src/index.ts"
+    "start": "bun src/index.ts",
+    "migrate:run": "bun src/scripts/migrate.ts",
+    "migrate:status": "bun src/scripts/migrate-status.ts"
   },
   "dependencies": {
     "@elysiajs/cookie": "^0.8.0",
@@ -16,7 +18,7 @@
     "elysia": "^1.1.30",
     "google-auth-library": "^10.3.0",
     "googleapis": "^158.0.0",
-    "postgres": "^3.4.7"
+    "@timely/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

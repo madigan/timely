@@ -1,21 +1,25 @@
 import { Elysia } from "elysia";
 import { requireAuth } from "./auth.js";
 import { getUserCalendars, getCalendarEvents } from "../services/calendar.js";
+import { Calendar, CalendarEvent, ApiResponse } from "@timely/shared";
 
 export const calendarRoutes = new Elysia({ prefix: "/api" })
   .use(requireAuth())
-  .get("/calendars", async ({ userId, set }) => {
+  .get("/calendars", async ({ userId, set }): Promise<Calendar[] | ApiResponse> => {
     try {
       const calendars = await getUserCalendars(userId);
       return calendars;
     } catch (error) {
       console.error("Failed to fetch calendars:", error);
       set.status = 500;
-      return { error: "Failed to fetch calendars" };
+      return { 
+        status: 'error', 
+        message: "Failed to fetch calendars"
+      };
     }
   })
 
-  .get("/calendars/:id/events", async ({ params, query, userId, set }) => {
+  .get("/calendars/:id/events", async ({ params, query, userId, set }): Promise<CalendarEvent[] | ApiResponse> => {
     try {
       const { id: calendarId } = params;
       const { timeMin, timeMax } = query as {
@@ -33,11 +37,14 @@ export const calendarRoutes = new Elysia({ prefix: "/api" })
     } catch (error) {
       console.error("Failed to fetch events:", error);
       set.status = 500;
-      return { error: "Failed to fetch calendar events" };
+      return { 
+        status: 'error', 
+        message: "Failed to fetch calendar events" 
+      };
     }
   })
 
-  .get("/events", async ({ query, userId, set }) => {
+  .get("/events", async ({ query, userId, set }): Promise<CalendarEvent[] | ApiResponse> => {
     try {
       const { timeMin, timeMax } = query as {
         timeMin?: string;
@@ -79,6 +86,9 @@ export const calendarRoutes = new Elysia({ prefix: "/api" })
     } catch (error) {
       console.error("Failed to fetch all events:", error);
       set.status = 500;
-      return { error: "Failed to fetch events" };
+      return { 
+        status: 'error', 
+        message: "Failed to fetch events" 
+      };
     }
   });

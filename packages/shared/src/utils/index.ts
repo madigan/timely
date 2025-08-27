@@ -9,3 +9,7 @@ export function formatDateString(date: Date | string): string {
 export function isValidDate(date: any): boolean {
   return date instanceof Date && !isNaN(date.getTime());
 }
+
+export function die(msg: string): string {
+  throw new Error(msg);
+}

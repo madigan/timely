@@ -1,10 +1,7 @@
 import { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
 import crypto from "crypto";
-
-function die(msg: string): string {
-  throw new Error(msg);
-}
+import { die } from "@timely/shared";
 
 // OAuth configuration
 const CLIENT_ID =
