@@ -358,15 +358,17 @@ onMounted(async () => {
 });
 
 async function loadEvents() {
-  const calendars = await calendarStore.getCalendars();
-  const enabledCalendars = calendars.filter((cal) => cal.isEnabled);
-
-  const events: any[] = [];
-
-  for (const calendar of enabledCalendars) {
-    const calendarEvents = await calendarStore.getEvents(calendar.id);
-    events.push(...calendarEvents);
-  }
+  // First load calendars to ensure they're available
+  await calendarStore.getCalendars();
+  
+  // Get all events from enabled calendars for the current date range
+  const startDate = new Date(fromDate.value);
+  const endDate = new Date(toDate.value);
+  
+  const events = await calendarStore.getAllEvents(
+    startDate.toISOString(),
+    endDate.toISOString()
+  );
 
   allEvents.value = events;
 }

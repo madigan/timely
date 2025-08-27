@@ -9,9 +9,13 @@
     "start": "bun src/index.ts"
   },
   "dependencies": {
-    "elysia": "^1.1.30",
+    "@elysiajs/cookie": "^0.8.0",
+    "@elysiajs/cors": "^1.1.1",
     "@elysiajs/static": "^1.1.1",
-    "@elysiajs/cors": "^1.1.1"
+    "cookie": "^1.0.2",
+    "elysia": "^1.1.30",
+    "google-auth-library": "^10.3.0",
+    "googleapis": "^158.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
