@@ -1,3 +1,4 @@
+import { toPGArray } from "@timely/shared"
 import { sql } from "../db/database.service.ts"
 
 export interface ImportantEventSettings {
@@ -61,11 +62,12 @@ export async function getImportantEventSettings(userId: string): Promise<Importa
  */
 export async function createDefaultImportantEventSettings(userId: string): Promise<ImportantEventSettings> {
   try {
+    const keywords = toPGArray(DEFAULT_KEYWORDS);
     const rows = await sql`
       INSERT INTO important_event_settings (user_id, keywords, enabled, display_limit)
       VALUES (
         ${userId},
-        ${DEFAULT_KEYWORDS},
+        ${keywords},
         true,
         3
       )
@@ -104,11 +106,12 @@ export async function updateImportantEventSettings(
       .map(k => k.trim().toLowerCase())
       .filter(k => k.length > 0)
       .filter((k, i, arr) => arr.indexOf(k) === i) // Remove duplicates
+    const keywords = toPGArray(cleanKeywords);
 
     const rows = await sql`
       UPDATE important_event_settings 
       SET 
-        keywords = ${cleanKeywords},
+        keywords = ${keywords},
         enabled = ${settings.enabled},
         display_limit = ${settings.displayLimit},
         updated_at = CURRENT_TIMESTAMP

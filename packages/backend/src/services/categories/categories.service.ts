@@ -1,5 +1,5 @@
-import assert from "node:assert"
 import { sql } from "../db/database.service.ts"
+import { toPGArray } from "@timely/shared"
 
 export interface Category {
   id: string
@@ -47,12 +47,9 @@ const DEFAULT_CATEGORIES = [
 export async function initializeUserCategories(userId: string): Promise<void> {
   for (const category of DEFAULT_CATEGORIES) {
     try {
-      // Convert JavaScript array to PostgreSQL array format
-      const keywordsArray = `{${category.keywords.map((k) => `"${k}"`).join(",")}}`
-
       await sql`
         INSERT INTO categories (user_id, name, color, keywords, target)
-        VALUES (${userId}, ${category.name}, ${category.color}, ${keywordsArray}, ${category.target})
+        VALUES (${userId}, ${category.name}, ${category.color}, ${toPGArray(category.keywords)}, ${category.target})
       `
     } catch (error) {
       console.error("Error inserting category:", category.name, error)
@@ -94,13 +91,11 @@ export async function updateCategory({
   target: number
   userId: string
 }) {
-  const keywordsArray = `{${keywords.map((k: string) => `"${k}"`).join(",")}}`
-
   const [updatedCategory] = await sql`
     UPDATE categories 
     SET name = ${name}, 
       color = ${color}, 
-      keywords = ${keywordsArray}, 
+      keywords = ${toPGArray(keywords)}, 
       target = ${target},
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ${id} AND user_id = ${userId}
@@ -123,10 +118,9 @@ export async function createCategory({
   keywords: string[]
   target: number
 }) {
-  const keywordsArray = `{${keywords.map((k: string) => `"${k}"`).join(",")}}`
   const [category] = await sql`
         INSERT INTO categories (user_id, name, color, keywords, target)
-        VALUES (${userId}, ${name}, ${color}, ${keywordsArray}, ${target})
+        VALUES (${userId}, ${name}, ${color}, ${toPGArray(keywords)}, ${target})
         RETURNING id, name, color, keywords, target, created_at, updated_at
       `
   return category

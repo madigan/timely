@@ -13,3 +13,7 @@ export function isValidDate(date: any): boolean {
 export function die(msg: string): string {
   throw new Error(msg)
 }
+
+export function toPGArray(arr: string[]) {
+  return `{${arr.map((k) => `"${k}"`).join(",")}}`
+}
