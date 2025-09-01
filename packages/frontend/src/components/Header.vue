@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { RouterLink } from "vue-router"
+import { storeToRefs } from "pinia"
 import { useAuthStore } from "@/stores/auth"
 
-const { user, login, logout, isLoggedIn } = useAuthStore()
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
+const { login, logout, isLoggedIn } = authStore
 const imageError = ref(false)
 
 const handleImageError = () => {

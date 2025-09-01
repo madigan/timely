@@ -96,7 +96,7 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   function isLoggedIn() {
-    return user.value !== null
+    return user.value !== null && user.value.name !== undefined && user.value.email !== undefined
   }
 
   // Clear error state
