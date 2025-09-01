@@ -35,7 +35,7 @@ export const categoryRoutes = new Elysia({ prefix: "/api/categories" })
     "/",
     async ({ body, userId, set }) => {
       try {
-        const [category] = await createCategory({
+        const category = await createCategory({
           userId,
           ...body,
         })

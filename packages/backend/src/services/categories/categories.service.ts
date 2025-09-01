@@ -123,7 +123,6 @@ export async function createCategory({
   keywords: string[]
   target: number
 }) {
-  assert(Array.isArray(keywords), "keywords wasn't an array...")
   const keywordsArray = `{${keywords.map((k: string) => `"${k}"`).join(",")}}`
   const [category] = await sql`
         INSERT INTO categories (user_id, name, color, keywords, target)
