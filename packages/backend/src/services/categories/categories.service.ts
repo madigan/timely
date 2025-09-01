@@ -1,4 +1,4 @@
-import { sql } from "../../db/database.js";
+import { sql } from "../../db/database.ts";
 
 export interface Category {
     id:string;
@@ -11,7 +11,6 @@ export interface Category {
 // Default categories that new users receive
 const DEFAULT_CATEGORIES = [
   {
-    id: "worship",
     name: "Worship Services",
     color: "#3B82F6",
     keywords: [
@@ -25,7 +24,6 @@ const DEFAULT_CATEGORIES = [
     target: 40,
   },
   {
-    id: "fellowship",
     name: "Fellowship",
     color: "#10B981",
     keywords: [
@@ -39,7 +37,6 @@ const DEFAULT_CATEGORIES = [
     target: 25,
   },
   {
-    id: "outreach",
     name: "Community Outreach",
     color: "#F59E0B",
     keywords: [
@@ -53,7 +50,6 @@ const DEFAULT_CATEGORIES = [
     target: 20,
   },
   {
-    id: "education",
     name: "Education & Study",
     color: "#8B5CF6",
     keywords: [
@@ -67,21 +63,19 @@ const DEFAULT_CATEGORIES = [
     target: 10,
   },
   {
-    id: "arts",
     name: "Music & Arts",
     color: "#EC4899",
     keywords: ["music", "choir", "band", "art", "creative", "performance"],
     target: 5,
   },
-];
+ ];
 
 // Initialize default categories for new user
 export async function initializeUserCategories(userId: string): Promise<void> {
   for (const category of DEFAULT_CATEGORIES) {
     await sql`
-      INSERT INTO categories (id, user_id, name, color, keywords, target)
-      VALUES (${category.id}, ${userId}, ${category.name}, ${category.color}, ${category.keywords}, ${category.target})
-      ON CONFLICT (id) DO NOTHING
+      INSERT INTO categories (user_id, name, color, keywords, target)
+      VALUES (${userId}, ${category.name}, ${category.color}, ${category.keywords}, ${category.target})
     `;
   }
 }

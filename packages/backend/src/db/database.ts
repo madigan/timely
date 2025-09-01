@@ -173,12 +173,12 @@ initializeDatabase();
 setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 
 // Graceful shutdown handler
-process.on('SIGTERM', async () => {
-  console.log('🔌 Closing DB connection...');
-  await sql.end();
-});
+// process.on('SIGTERM', async () => {
+//   console.log('🔌 Closing DB connection...');
+//   await sql.end();
+// });
 
-process.on('SIGINT', async () => {
-  console.log('🔌 Closing DB connection...');
-  await sql.end();
-});
+// process.on('SIGINT', async () => {
+//   console.log('🔌 Closing DB connection...');
+//   await sql.end();
+// });

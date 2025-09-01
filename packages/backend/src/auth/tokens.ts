@@ -1,5 +1,5 @@
-import { encryptToken, decryptToken } from "./oauth.js";
-import { sql } from '../db/database.js';
+import { encryptToken, decryptToken } from "./oauth.ts";
+import { sql } from '../db/database.ts';
 
 export interface UserTokens {
   userId: string;
@@ -18,8 +18,8 @@ export async function storeUserTokens(tokens: UserTokens): Promise<void> {
     const encryptedRefreshToken = tokens.refreshToken ? encryptToken(tokens.refreshToken) : null;
     
     await sql`
-      INSERT INTO user_tokens 
-      (user_id, access_token, refresh_token, expiry_date, email, name, picture, updated_at)
+      INSERT INTO users
+      (id, access_token, refresh_token, expiry_date, email, name, picture, updated_at)
       VALUES (
         ${tokens.userId},
         ${encryptedAccessToken},
@@ -30,7 +30,7 @@ export async function storeUserTokens(tokens: UserTokens): Promise<void> {
         ${tokens.picture},
         CURRENT_TIMESTAMP
       )
-      ON CONFLICT (user_id) 
+      ON CONFLICT (id)
       DO UPDATE SET
         access_token = EXCLUDED.access_token,
         refresh_token = EXCLUDED.refresh_token,
@@ -50,9 +50,9 @@ export async function storeUserTokens(tokens: UserTokens): Promise<void> {
 export async function getUserTokens(userId: string): Promise<UserTokens | null> {
   try {
     const rows = await sql`
-      SELECT user_id, access_token, refresh_token, expiry_date, email, name, picture
-      FROM user_tokens 
-      WHERE user_id = ${userId}
+      SELECT id, access_token, refresh_token, expiry_date, email, name, picture
+      FROM users
+      WHERE id = ${userId}
     `;
     
     if (rows.length === 0) {
@@ -62,10 +62,10 @@ export async function getUserTokens(userId: string): Promise<UserTokens | null> 
     const row = rows[0];
     
     return {
-      userId: row.userId,
-      accessToken: decryptToken(row.accessToken),
-      refreshToken: row.refreshToken ? decryptToken(row.refreshToken) : undefined,
-      expiryDate: row.expiryDate || undefined,
+      userId: row.id,
+      accessToken: decryptToken(row.access_token),
+      refreshToken: row.refresh_token ? decryptToken(row.refresh_token) : undefined,
+      expiryDate: row.expiry_date || undefined,
       email: row.email,
       name: row.name,
       picture: row.picture,
@@ -81,7 +81,7 @@ export async function deleteUserTokens(userId: string): Promise<void> {
   try {
     // Use a transaction to ensure both operations complete together
     await sql.begin(async sql => {
-      await sql`DELETE FROM user_tokens WHERE user_id = ${userId}`;
+      await sql`DELETE FROM users WHERE id = ${userId}`;
       await sql`DELETE FROM sessions WHERE user_id = ${userId}`;
     });
   } catch (error) {
@@ -131,7 +131,7 @@ export async function getSessionUserId(sessionId: string): Promise<string | null
         AND expires_at > CURRENT_TIMESTAMP
     `;
     
-    return rows.length > 0 ? rows[0].userId : null;
+    return rows.length > 0 ? rows[0].user_id : null;
   } catch (error) {
     console.error('Error getting session user ID:', error);
     return null;

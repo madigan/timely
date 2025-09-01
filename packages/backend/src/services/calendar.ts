@@ -3,12 +3,12 @@ import {
   oauth2Client,
   createCalendarClient,
   getUserInfo,
-} from "../auth/oauth.js";
+} from "../auth/oauth.ts";
 import {
   getUserTokens,
   storeUserTokens,
   needsRefresh,
-} from "../auth/tokens.js";
+} from "../auth/tokens.ts";
 
 export interface CalendarListItem {
   id: string;

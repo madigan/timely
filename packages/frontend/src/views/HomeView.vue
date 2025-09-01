@@ -1,17 +1,5 @@
 <template>
   <div class="min-h-screen">
-    <!-- OAuth Error Alert -->
-    <div v-if="oauthError" class="alert alert-error fixed top-4 left-4 right-4 z-50 max-w-md mx-auto">
-      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>{{ oauthError }}</span>
-      <button class="btn btn-sm btn-ghost" @click="dismissError">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
 
     <!-- Loading state -->
     <div v-if="authStore.isLoading" class="min-h-screen flex items-center justify-center">
@@ -35,19 +23,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useToastStore } from "@/stores/toast";
 import HeroSection from "@/components/HeroSection.vue";
 import FeaturesSection from "@/components/FeaturesSection.vue";
 import CalendarGrid from "@/components/CalendarGrid.vue";
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
-const { login, isLoggedIn } = authStore;
+const toastStore = useToastStore();
+const { login, isLoggedIn, initializeAuth } = authStore;
 
-// Handle OAuth errors from URL params
-const oauthError = ref<string | null>(null);
+// Watch for authentication errors and show toast
+watch(() => authStore.authError, (newError) => {
+  if (newError && authStore.showAuthError) {
+    toastStore.showToast(newError, 'error');
+    authStore.showAuthError = false;
+  }
+});
 
 const errorMessages: Record<string, string> = {
   'access_denied': 'You denied access to Google Calendar. Please try again.',
@@ -58,14 +54,19 @@ const errorMessages: Record<string, string> = {
   'oauth_failed': 'OAuth authentication failed. Please try again.'
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await initializeAuth();
+
+  // Handle OAuth errors from URL params
   const error = route.query.error as string;
   if (error) {
-    oauthError.value = errorMessages[error] || 'An unknown error occurred during authentication.';
+    const message = errorMessages[error] || 'An unknown error occurred during authentication.';
+    toastStore.showToast(message, 'error');
+
+    // Clear error from URL
+    router.replace({ query: {} });
   }
 });
 
-function dismissError() {
-  oauthError.value = null;
-}
+
 </script>

@@ -1,23 +1,14 @@
 import { Elysia, t } from 'elysia';
-import { oauth2Client, CALENDAR_SCOPES, generateCSRFState, getUserInfo } from '../auth/oauth.js';
-import { storeUserTokens, createSession, deleteSession, getSessionUserId, deleteUserTokens } from '../auth/tokens.js';
-import { getUserProfile } from '../services/calendar.js';
+import { oauth2Client, CALENDAR_SCOPES, generateCSRFState, getUserInfo } from '../auth/oauth.ts';
+import { storeUserTokens, createSession, deleteSession, getSessionUserId, deleteUserTokens } from '../auth/tokens.ts';
+import { getUserProfile } from '../services/calendar.ts';
+import { die } from '@timely/shared';
 
 // CSRF state storage (in production, use Redis)
 const csrfStates = new Map<string, number>(); // state -> timestamp
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
-  .get('/config', () => {
-    return {
-      hasClientId: !!process.env.GOOGLE_CLIENT_ID,
-      hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-      redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback',
-      environment: process.env.NODE_ENV || 'development',
-      oauthConfigured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
-    };
-  })
-  
-  .get('/google', ({ redirect, set, cookie, query }) => {
+  .get('/google', ({ redirect, set, cookie }) => {
     // Check if OAuth is configured
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       set.headers['content-type'] = 'text/html';
@@ -60,9 +51,8 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     cookie.oauth_state.value = state;
     cookie.oauth_state.httpOnly = true;
     cookie.oauth_state.secure = process.env.NODE_ENV === 'production';
-    cookie.oauth_state.sameSite = 'lax';
+    cookie.oauth_state.sameSite = 'lax'; // Allow cookie to be sent on OAuth redirects
     cookie.oauth_state.maxAge = 600; // 10 minutes
-    
     
     // Use Elysia's built-in redirect
     return redirect(authUrl);
@@ -70,7 +60,6 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   
   .get('/google/callback', async ({ query, headers, redirect, set, cookie }) => {
     const { code, state, error } = query as { code?: string; state?: string; error?: string };
-    
     
     // Handle OAuth errors
     if (error) {
@@ -87,9 +76,21 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
     // Verify CSRF state using ElysiaJS reactive cookies
     const storedState = cookie.oauth_state.value;
+    console.log('OAuth Callback Debug:', {
+      receivedState: state,
+      storedState: storedState,
+      cookiesReceived: Object.keys(cookie),
+      allCookies: headers.cookie
+    });
+    
     const stateIsValid = storedState === state;
     
     if (!stateIsValid) {
+      console.error('OAuth state validation failed:', {
+        received: state,
+        stored: storedState,
+        match: stateIsValid
+      });
       const redirectUrl = '/?error=invalid_state';
       set.headers['content-type'] = 'text/html';
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectUrl}"></head><body>Redirecting...</body></html>`;

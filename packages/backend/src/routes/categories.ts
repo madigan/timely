@@ -1,44 +1,7 @@
 import { Elysia, t } from 'elysia';
-import { sql } from '../db/database.js';
-
-// Default categories that new users receive
-const DEFAULT_CATEGORIES = [
-  {
-    id: 'worship',
-    name: 'Worship Services',
-    color: '#3B82F6',
-    keywords: ['worship', 'service', 'sunday', 'mass', 'sermon', 'prayer meeting'],
-    target: 40
-  },
-  {
-    id: 'fellowship',
-    name: 'Fellowship',
-    color: '#10B981',
-    keywords: ['fellowship', 'social', 'community', 'potluck', 'gathering', 'small group'],
-    target: 25
-  },
-  {
-    id: 'outreach',
-    name: 'Community Outreach',
-    color: '#F59E0B',
-    keywords: ['outreach', 'mission', 'volunteer', 'community service', 'evangelism', 'food bank'],
-    target: 20
-  },
-  {
-    id: 'education',
-    name: 'Education & Study',
-    color: '#8B5CF6',
-    keywords: ['bible study', 'education', 'class', 'seminar', 'training', 'conference'],
-    target: 10
-  },
-  {
-    id: 'arts',
-    name: 'Music & Arts',
-    color: '#EC4899',
-    keywords: ['music', 'choir', 'band', 'art', 'creative', 'performance'],
-    target: 5
-  }
-];
+import { sql } from '../db/database.ts';
+import { initializeUserCategories } from '../services/categories/categories.service.ts';
+import { requireAuth } from './auth.ts';
 
 // Category validation schema
 const categorySchema = t.Object({
@@ -48,48 +11,14 @@ const categorySchema = t.Object({
   target: t.Number({ minimum: 0, maximum: 100 })
 });
 
-// Get user ID from session cookie
-async function getUserId(cookie: any): Promise<string | null> {
-  const sessionId = cookie.session?.value;
-  if (!sessionId) return null;
-  
-  try {
-    const [session] = await sql`
-      SELECT user_id FROM sessions 
-      WHERE session_id = ${sessionId} AND expires_at > NOW()
-    `;
-    return session?.user_id || null;
-  } catch (error) {
-    console.error('Error getting user ID:', error);
-    return null;
-  }
-}
 
-// Initialize default categories for new user
-async function initializeUserCategories(userId: string): Promise<void> {
-  for (const category of DEFAULT_CATEGORIES) {
-    await sql`
-      INSERT INTO categories (id, user_id, name, color, keywords, target)
-      VALUES (${category.id}, ${userId}, ${category.name}, ${category.color}, ${category.keywords}, ${category.target})
-      ON CONFLICT (id) DO NOTHING
-    `;
-  }
-}
+
+
 
 export const categoryRoutes = new Elysia({ prefix: '/api/categories' })
+  .use(requireAuth())
   // Get all categories for authenticated user
-  .get('/', async ({ cookie, set }) => {
-    const sessionId = cookie.session?.value;
-    if (!sessionId) {
-      set.status = 401;
-      return { error: 'No session cookie found' };
-    }
-
-    const userId = await getUserId(cookie);
-    if (!userId) {
-      set.status = 401;
-      return { error: 'Invalid session' };
-    }
+  .get('/', async ({ userId, set }) => {
 
     try {
       const categories = await sql`
@@ -120,12 +49,7 @@ export const categoryRoutes = new Elysia({ prefix: '/api/categories' })
   })
 
   // Create new category
-  .post('/', async ({ body, cookie, set }) => {
-    const userId = await getUserId(cookie);
-    if (!userId) {
-      set.status = 401;
-      return { error: 'Unauthorized' };
-    }
+  .post('/', async ({ body, userId, set }) => {
 
     try {
       const [category] = await sql`
@@ -146,12 +70,7 @@ export const categoryRoutes = new Elysia({ prefix: '/api/categories' })
   })
 
   // Update existing category
-  .put('/:id', async ({ params, body, cookie, set }) => {
-    const userId = await getUserId(cookie);
-    if (!userId) {
-      set.status = 401;
-      return { error: 'Unauthorized' };
-    }
+  .put('/:id', async ({ params, body, userId, set }) => {
 
     try {
       const [category] = await sql`
@@ -181,12 +100,7 @@ export const categoryRoutes = new Elysia({ prefix: '/api/categories' })
   })
 
   // Delete category
-  .delete('/:id', async ({ params, cookie, set }) => {
-    const userId = await getUserId(cookie);
-    if (!userId) {
-      set.status = 401;
-      return { error: 'Unauthorized' };
-    }
+  .delete('/:id', async ({ params, userId, set }) => {
 
     try {
       const [deletedCategory] = await sql`

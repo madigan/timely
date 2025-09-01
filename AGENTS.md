@@ -14,6 +14,7 @@
 - **Routing**: Vue Router v4
 - **Package Manager**: Bun
 - **Authentication**: Google OAuth 2.0 with Google Calendar API integration
+- **Database**: PostgreSQL with Bun SQL
 
 ### Key Dependencies
 
@@ -24,7 +25,8 @@
   "pinia": "^3.0.3",
   "vue-router": "^4.5.1",
   "tailwindcss": "^4.1.11",
-  "daisyui": "^5.0.50"
+  "daisyui": "^5.0.50",
+  "vue3-google-login": "^2.0.34"
 }
 ```
 
@@ -34,8 +36,10 @@
   "elysia": "^1.1.30",
   "@elysiajs/cors": "^1.1.1",
   "@elysiajs/static": "^1.1.1",
+  "@elysiajs/cookie": "^0.8.0",
   "google-auth-library": "^10.3.0",
-  "googleapis": "^158.0.0"
+  "googleapis": "^158.0.0",
+  "cookie": "^1.0.2"
 }
 ```
 
@@ -47,16 +51,31 @@ packages/
 ├── frontend/         # Vue.js frontend application
 │   └── src/
 │       ├── assets/           # CSS and static assets
+│       │   ├── base.css              # Base styles
+│       │   ├── logo.svg              # App logo
+│       │   ├── main.css              # Main stylesheet
 │       ├── components/       # Vue components
 │       │   ├── CalendarGrid.vue        # Main calendar display
 │       │   ├── CalendarMonth.vue       # Monthly calendar view
 │       │   ├── CategoryModal.vue       # Category management UI
+│       │   ├── CategorySettings.vue    # Category settings panel
 │       │   ├── FeaturesSection.vue     # Landing page features
 │       │   ├── Footer.vue             # App footer
 │       │   ├── Header.vue             # App header with nav
 │       │   ├── HeroSection.vue        # Landing page hero
-│       │   └── ImportantEventsAccordion.vue
+│       │   ├── ImportantEventsPanel.vue    # Important events display
+│       │   ├── ImportantEventsSettings.vue # Important events config
+│       │   ├── MonthAnalyticsModal.vue     # Monthly analytics modal
+│       │   ├── MonthlyStatsPanel.vue       # Monthly statistics
+│       │   ├── WeeklyStatsPanel.vue        # Weekly statistics
+│       ├── constants/        # Application constants
+│       │   └── display.ts             # Display-related constants
+│       ├── lib/              # Library code
+│       │   ├── __tests__/             # Unit tests
+│       │   │   └── eventAnalytics.test.ts
+│       │   └── eventAnalytics.ts      # Event analytics utilities
 │       ├── router/           # Vue Router configuration
+│       │   └── index.ts               # Router setup
 │       ├── stores/           # Pinia state management
 │       │   ├── auth.ts                # User authentication
 │       │   ├── calendars.ts           # Calendar data & events
@@ -69,17 +88,32 @@ packages/
 │       │   └── SettingsView.vue       # App configuration
 │       ├── App.vue           # Root component
 │       └── main.ts           # Application entry point
-└── backend/          # Elysia/Bun backend API
+├── backend/          # Elysia/Bun backend API
+│   └── src/
+│       ├── auth/             # Authentication modules
+│       │   ├── oauth.ts              # Google OAuth configuration
+│       │   └── tokens.ts             # Token management & sessions
+│       ├── db/               # Database configuration
+│       │   └── database.ts            # Database setup & migrations
+│       ├── routes/           # API route handlers
+│       │   ├── auth.ts               # Authentication endpoints
+│       │   ├── calendar.ts           # Calendar API endpoints
+│       │   └── categories.ts         # Categories API endpoints
+│       ├── scripts/          # Database scripts
+│       │   ├── migrate-status.ts     # Migration status checker
+│       │   └── migrate.ts            # Migration runner
+│       ├── services/         # Business logic services
+│       │   ├── categories/           # Category services
+│       │   │   └── categories.service.ts
+│       │   └── calendar.ts           # Google Calendar API integration
+│       └── index.ts          # Server entry point
+└── shared/           # Shared types and utilities
     └── src/
-        ├── auth/             # Authentication modules
-        │   ├── oauth.ts              # Google OAuth configuration
-        │   └── tokens.ts             # Token management & sessions
-        ├── routes/           # API route handlers
-        │   ├── auth.ts               # Authentication endpoints
-        │   └── calendar.ts           # Calendar API endpoints
-        ├── services/         # Business logic services
-        │   └── calendar.ts           # Google Calendar API integration
-        └── index.ts          # Server entry point
+        ├── types/            # Shared TypeScript types
+        │   └── index.ts
+        ├── utils/            # Shared utility functions
+        │   └── index.ts
+        └── index.ts
 ```
 
 ## Core Features & Functionality
@@ -110,7 +144,9 @@ packages/
 - **Authenticated Requests**: Secure API calls using stored OAuth tokens
 
 ### 3. Event Categorization
-- **Location**: `packages/frontend/src/stores/categories.ts`
+- **Frontend**: `packages/frontend/src/stores/categories.ts` - Category state management
+- **Backend**: `packages/backend/src/services/categories/categories.service.ts` - Category business logic
+- **API Routes**: `packages/backend/src/routes/categories.ts` - Category CRUD endpoints
 - Keyword-based automatic event classification
 - Color-coded categories with target time percentages
 - CRUD operations for category management
@@ -128,6 +164,26 @@ packages/
 - Keyword-based importance detection
 - Event filtering and sorting utilities
 - Configurable importance criteria
+
+### 6. Analytics & Reporting
+- **Monthly Statistics**: `packages/frontend/src/components/MonthlyStatsPanel.vue`
+- **Weekly Statistics**: `packages/frontend/src/components/WeeklyStatsPanel.vue`
+- **Event Analytics**: `packages/frontend/src/lib/eventAnalytics.ts`
+- Category-based time allocation analysis
+- Print-optimized reports for organizational planning
+
+## Database Schema
+
+### Tables
+- **users**: User account information and encrypted OAuth tokens
+- **sessions**: User session management with expiration
+- **categories**: User-defined event categories with keywords and targets
+- **migrations**: Database migration tracking
+
+### Key Relationships
+- Categories belong to users (user_id foreign key)
+- Sessions belong to users (user_id foreign key)
+- All tables include created_at and updated_at timestamps
 
 ## Development Commands
 
@@ -160,6 +216,10 @@ bun run dev
 # Production server
 bun start
 
+# Database operations
+bun run migrate:run     # Run pending migrations
+bun run migrate:status  # Check migration status
+
 # Build (if needed)
 bun run build
 ```
@@ -171,6 +231,9 @@ bun install
 
 # Start both frontend and backend concurrently
 bun dev
+
+# Build both frontend and backend
+bun run build
 ```
 
 ## Configuration & Environment
@@ -188,12 +251,18 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 # Must be exactly 64 hex characters (32 bytes)
 ENCRYPTION_KEY=your_64_character_hex_encryption_key_here
 
+# Database Configuration
+DATABASE_URL=postgresql://username:password@localhost:5432/timely
+
 # Environment
 NODE_ENV=development
 ```
 
-#### Frontend (`packages/frontend/.env`)
+#### Frontend (`packages/frontend/.env.local`)
 ```bash
+# Google OAuth (different from backend - for client-side usage)
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+
 # API endpoint for backend (optional, defaults to http://localhost:3000)
 VITE_API_BASE_URL=http://localhost:3000
 ```
@@ -210,14 +279,32 @@ VITE_API_BASE_URL=http://localhost:3000
 7. Copy the Client ID and Client Secret to your `.env` file
 8. Generate an encryption key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
-See `GOOGLE_OAUTH_SETUP.md` for detailed setup instructions.
+### Database Setup
+1. Install PostgreSQL
+2. Create a database named `timely`
+3. Update `DATABASE_URL` in `.env` with your connection string
+4. Run migrations: `bun run --cwd packages/backend migrate:run`
 
 ### Build Configuration
-- **Vite Config**: `vite.config.ts`
-- TypeScript configuration with multiple tsconfig files
+- **Vite Config**: `packages/frontend/vite.config.ts`
+- **Backend Config**: `packages/backend/tsconfig.json`
+- **Shared Config**: `packages/shared/tsconfig.json`
 - Path aliases: `@` → `src/`
 
 ## Key Data Models
+
+### User Tokens Interface
+```typescript
+interface UserTokens {
+  userId: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiryDate?: number;
+  email: string;
+  name: string;
+  picture: string;
+}
+```
 
 ### Calendar Interface
 ```typescript
@@ -254,6 +341,15 @@ interface Category {
 }
 ```
 
+### Important Event Settings
+```typescript
+interface ImportantEventSettings {
+  keywords: string[];
+  enabled: boolean;
+  displayLimit: number;
+}
+```
+
 ## Deployment
 
 - **Platform**: Fly.io (configured via `fly.toml`)
@@ -267,6 +363,7 @@ interface Category {
 - **Real Google Calendar Data**: Fetches actual calendar events from authenticated users' Google accounts
 - **Secure Session Management**: HTTP-only cookies with encrypted token storage
 - **Categories**: Pre-configured for church/ministry use cases with automatic event categorization
+- **Recent Fixes Applied**: Database column mapping corrected, categories primary key conflicts resolved, duplicate default categories removed
 
 ### Authentication Architecture
 
@@ -301,6 +398,16 @@ The application uses a complete server-side OAuth 2.0 flow:
 - **DOM Testing**: jsdom for component testing
 - **Vue Testing**: @vue/test-utils integration
 
+## Current Issues & Known Problems
+
+### 🚨 Critical Issues
+1. **Security**: Exposed OAuth credentials in committed `.env` file
+
+### 🟡 TypeScript Configuration Issues
+- Backend `tsconfig.json` doesn't include all source files
+- Missing type declarations for some modules
+- Import resolution issues
+
 ## Agent Instructions
 
 When working with this codebase:
@@ -316,5 +423,26 @@ When working with this codebase:
 9. **Follow existing naming conventions** - kebab-case for files, camelCase for variables
 10. **Test type checking** - run `bun run type-check` after changes
 11. **Parent-controlled visibility** - whether a component should be displayed or hidden is determined by the parent component, not by conditional rendering within the component itself
+12. **Dev Server** - Ask the human to run the development server if it is not already running on port 3000. The dev server automatically restarts when changes are made.
+13. **Environment Variables** - Document these in AGENTS.md instead of .env.example files so there is one source of truth for the configuration.
 
-The codebase is well-structured and follows modern Vue 3 best practices with a focus on calendar management and event categorization for organizational time tracking.
+## Development Workflow
+
+### Getting Started
+1. **Clone the repository**
+2. **Install dependencies**: `bun install`
+3. **Set up environment variables** (see Configuration section)
+4. **Set up database** and run migrations
+5. **Start development servers**: `bun dev`
+
+### Code Quality
+- **Linting**: Run `bun run type-check` before committing
+- **Testing**: Run `bun test:unit` for frontend tests
+- **Database**: Run `bun run --cwd packages/backend migrate:status` to check migrations
+
+### Deployment
+- **Build**: `bun run build` (builds both frontend and backend)
+- **Deploy**: Use Fly.io deployment configuration in `fly.toml`
+- **Database**: Ensure production database is set up with all migrations applied
+
+The codebase architecture is solid and has been updated with recent fixes to database column mapping, categories primary key conflicts, and duplicate default categories. The Vue 3 frontend with Pinia stores and the Elysia backend with PostgreSQL provide a robust foundation for the calendar management application. Note that security concerns regarding exposed OAuth credentials should be addressed before production deployment.
