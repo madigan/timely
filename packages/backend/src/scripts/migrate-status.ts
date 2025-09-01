@@ -41,7 +41,7 @@ async function getAppliedMigrations(): Promise<string[]> {
     `;
     
     const result = await sql`SELECT name FROM migrations ORDER BY name`;
-    return result.map(row => row.name);
+    return result.map((row: { name: any; }) => row.name);
   } catch (error) {
     console.warn('Error fetching applied migrations:', error);
     return [];

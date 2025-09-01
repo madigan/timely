@@ -1,24 +1,16 @@
 import { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
 import crypto from "crypto";
-import { die } from "@timely/shared";
-
-// OAuth configuration
-const CLIENT_ID =
-  process.env.GOOGLE_CLIENT_ID || die("GOOGLE_CLIENT_ID not provided.");
-const CLIENT_SECRET =
-  process.env.GOOGLE_CLIENT_SECRET || die("GOOGLE_CLIENT_SECRET not provided.");
-const REDIRECT_URI =
-  process.env.GOOGLE_REDIRECT_URI || die("GOOGLE_REDIRECT_URI not provided.");
+import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } from "./auth.env";
 
 // Encryption key for token storage
 const ENCRYPTION_KEY =
   process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex");
 
 export const oauth2Client = new OAuth2Client(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI
 );
 
 // Google Calendar API scopes
@@ -52,7 +44,7 @@ export function encryptToken(token: string): string {
     encrypted += cipher.final("hex");
 
     // Prepend IV to encrypted data (separated by ':')
-    return iv.toString("hex") + ":" + encrypted;
+    return `${iv.toString("hex")}:${encrypted}`;
   } catch (error) {
     console.error("Encryption error:", error);
     throw new Error("Failed to encrypt token");

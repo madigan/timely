@@ -46,131 +46,46 @@
 ## Project Structure
 
 ### Monorepo Architecture
-```
-packages/
-├── frontend/         # Vue.js frontend application
-│   └── src/
-│       ├── assets/           # CSS and static assets
-│       │   ├── base.css              # Base styles
-│       │   ├── logo.svg              # App logo
-│       │   ├── main.css              # Main stylesheet
-│       ├── components/       # Vue components
-│       │   ├── CalendarGrid.vue        # Main calendar display
-│       │   ├── CalendarMonth.vue       # Monthly calendar view
-│       │   ├── CategoryModal.vue       # Category management UI
-│       │   ├── CategorySettings.vue    # Category settings panel
-│       │   ├── FeaturesSection.vue     # Landing page features
-│       │   ├── Footer.vue             # App footer
-│       │   ├── Header.vue             # App header with nav
-│       │   ├── HeroSection.vue        # Landing page hero
-│       │   ├── ImportantEventsPanel.vue    # Important events display
-│       │   ├── ImportantEventsSettings.vue # Important events config
-│       │   ├── MonthAnalyticsModal.vue     # Monthly analytics modal
-│       │   ├── MonthlyStatsPanel.vue       # Monthly statistics
-│       │   ├── WeeklyStatsPanel.vue        # Weekly statistics
-│       ├── constants/        # Application constants
-│       │   └── display.ts             # Display-related constants
-│       ├── lib/              # Library code
-│       │   ├── __tests__/             # Unit tests
-│       │   │   └── eventAnalytics.test.ts
-│       │   └── eventAnalytics.ts      # Event analytics utilities
-│       ├── router/           # Vue Router configuration
-│       │   └── index.ts               # Router setup
-│       ├── stores/           # Pinia state management
-│       │   ├── auth.ts                # User authentication
-│       │   ├── calendars.ts           # Calendar data & events
-│       │   ├── categories.ts          # Event categorization
-│       │   └── importantEvents.ts     # Important events filtering
-│       ├── utils/            # Utility functions
-│       │   └── events.ts              # Event processing utilities
-│       ├── views/            # Page components
-│       │   ├── HomeView.vue           # Main dashboard/landing
-│       │   └── SettingsView.vue       # App configuration
-│       ├── App.vue           # Root component
-│       └── main.ts           # Application entry point
-├── backend/          # Elysia/Bun backend API
-│   └── src/
-│       ├── auth/             # Authentication modules
-│       │   ├── oauth.ts              # Google OAuth configuration
-│       │   └── tokens.ts             # Token management & sessions
-│       ├── db/               # Database configuration
-│       │   └── database.ts            # Database setup & migrations
-│       ├── routes/           # API route handlers
-│       │   ├── auth.ts               # Authentication endpoints
-│       │   ├── calendar.ts           # Calendar API endpoints
-│       │   └── categories.ts         # Categories API endpoints
-│       ├── scripts/          # Database scripts
-│       │   ├── migrate-status.ts     # Migration status checker
-│       │   └── migrate.ts            # Migration runner
-│       ├── services/         # Business logic services
-│       │   ├── categories/           # Category services
-│       │   │   └── categories.service.ts
-│       │   └── calendar.ts           # Google Calendar API integration
-│       └── index.ts          # Server entry point
-└── shared/           # Shared types and utilities
-    └── src/
-        ├── types/            # Shared TypeScript types
-        │   └── index.ts
-        ├── utils/            # Shared utility functions
-        │   └── index.ts
-        └── index.ts
-```
+Timely uses a monorepo structure with three main packages:
+
+- **[Backend Package](./packages/backend/AGENTS.md)**: Bun-based API server with Elysia framework
+- **[Frontend Package](./packages/frontend/AGENTS.md)**: Vue 3 SPA with TypeScript and Tailwind CSS
+- **[Shared Package](./packages/shared/AGENTS.md)**: Common TypeScript types and utilities
+
+### Root Level Files
+- `.github/workflows/fly-deploy.yml` - CI/CD pipeline for Fly.io deployment
+- `docker-compose.yml` - Local development environment
+- `fly.toml` - Fly.io deployment configuration
+- `package.json` - Root package configuration with workspace setup
 
 ## Core Features & Functionality
 
 ### 1. Authentication System
-- **Frontend**: `packages/frontend/src/stores/auth.ts` - Pinia store for user state
-- **Backend**: `packages/backend/src/routes/auth.ts` - OAuth endpoints and session management
-- **OAuth Configuration**: `packages/backend/src/auth/oauth.ts` - Google OAuth 2.0 setup
-- **Token Management**: `packages/backend/src/auth/tokens.ts` - Secure token storage and sessions
-
-#### Implementation Details
-- **Google OAuth 2.0 Flow**: Complete server-side OAuth implementation
-- **Session Management**: HTTP-only cookies with secure session storage
-- **Token Encryption**: AES-256-CBC encryption for stored access/refresh tokens
-- **CSRF Protection**: State-based protection against cross-site request forgery
-- **Google Calendar API**: Full integration with Google Calendar v3 API
-- **User Profile**: Retrieves and stores user profile information from Google
+Complete Google OAuth 2.0 integration with secure session management and token encryption.
+- See [Backend Package](./packages/backend/AGENTS.md#1-authentication-system) for implementation details
+- See [Frontend Package](./packages/frontend/AGENTS.md#1-authentication-system) for client-side integration
 
 ### 2. Calendar Management
-- **Frontend**: `packages/frontend/src/stores/calendars.ts` - Calendar state management
-- **Backend**: `packages/backend/src/services/calendar.ts` - Google Calendar API integration
-- **API Routes**: `packages/backend/src/routes/calendar.ts` - Calendar endpoints
-
-#### Features
-- **Real Google Calendar Data**: Fetches actual calendar data from user's Google account
-- **Multiple Calendar Support**: Handles multiple Google calendars with enable/disable toggles
-- **Event Filtering**: Date range filtering and calendar-specific event retrieval
-- **Authenticated Requests**: Secure API calls using stored OAuth tokens
+Real-time Google Calendar integration with multiple calendar support and event filtering.
+- See [Backend Package](./packages/backend/AGENTS.md#2-calendar-management) for API implementation
+- See [Frontend Package](./packages/frontend/AGENTS.md#2-calendar-management) for UI components
 
 ### 3. Event Categorization
-- **Frontend**: `packages/frontend/src/stores/categories.ts` - Category state management
-- **Backend**: `packages/backend/src/services/categories/categories.service.ts` - Category business logic
-- **API Routes**: `packages/backend/src/routes/categories.ts` - Category CRUD endpoints
-- Keyword-based automatic event classification
-- Color-coded categories with target time percentages
-- CRUD operations for category management
-- Pre-configured categories: Worship, Fellowship, Outreach, Education, Music
+Keyword-based automatic event classification with customizable categories and time tracking.
+- See [Backend Package](./packages/backend/AGENTS.md#3-category-management) for data layer
+- See [Frontend Package](./packages/frontend/AGENTS.md#3-event-categorization) for user interface
 
-### 4. Calendar Visualization
-- **Location**: `packages/frontend/src/components/CalendarGrid.vue`
-- Monthly grid view with event display
-- Date range filtering
-- Print-optimized layout
-- Responsive design with mobile support
+### 4. Analytics & Reporting
+Comprehensive time allocation analysis with monthly and weekly statistics.
+- See [Frontend Package](./packages/frontend/AGENTS.md#4-analytics--reporting) for visualization components
 
 ### 5. Important Events Tracking
-- **Location**: `packages/frontend/src/stores/importantEvents.ts`, `packages/frontend/src/utils/events.ts`
-- Keyword-based importance detection
-- Event filtering and sorting utilities
-- Configurable importance criteria
+Configurable event importance detection and highlighting.
+- See [Frontend Package](./packages/frontend/AGENTS.md#5-important-events-tracking) for implementation
 
-### 6. Analytics & Reporting
-- **Monthly Statistics**: `packages/frontend/src/components/MonthlyStatsPanel.vue`
-- **Weekly Statistics**: `packages/frontend/src/components/WeeklyStatsPanel.vue`
-- **Event Analytics**: `packages/frontend/src/lib/eventAnalytics.ts`
-- Category-based time allocation analysis
-- Print-optimized reports for organizational planning
+### 6. Calendar Visualization
+Responsive calendar grid with print optimization for organizational planning.
+- See [Frontend Package](./packages/frontend/AGENTS.md#4-calendar-management) for display components
 
 ## Database Schema
 
@@ -187,46 +102,13 @@ packages/
 
 ## Development Commands
 
-### Frontend (packages/frontend)
+### Package-Specific Commands
+- **[Frontend Commands](./packages/frontend/AGENTS.md#development-commands)**: Vue development server, building, and testing
+- **[Backend Commands](./packages/backend/AGENTS.md#development-commands)**: API server, database migrations, and deployment
+
+### Root Level Commands
 ```bash
-# Install dependencies
-bun install
-
-# Development server
-bun dev
-
-# Build for production
-bun run build
-
-# Run tests
-bun test:unit
-
-# Type checking
-bun run type-check
-```
-
-### Backend (packages/backend)
-```bash
-# Install dependencies
-bun install
-
-# Development server with auto-reload
-bun run dev
-
-# Production server
-bun start
-
-# Database operations
-bun run migrate:run     # Run pending migrations
-bun run migrate:status  # Check migration status
-
-# Build (if needed)
-bun run build
-```
-
-### Root Level
-```bash
-# Install all dependencies (frontend + backend)
+# Install all dependencies (frontend + backend + shared)
 bun install
 
 # Start both frontend and backend concurrently
@@ -238,117 +120,27 @@ bun run build
 
 ## Configuration & Environment
 
-### Required Environment Variables
+### Environment Variables
+- **[Backend Configuration](./packages/backend/AGENTS.md#configuration--environment)**: Google OAuth, database, and encryption settings
+- **[Frontend Configuration](./packages/frontend/AGENTS.md#configuration--environment)**: Google OAuth client ID and API endpoints
+- **[Shared Configuration](./packages/shared/AGENTS.md#configuration--environment)**: TypeScript compilation settings
 
-#### Backend (`packages/backend/.env`)
-```bash
-# Google OAuth Configuration
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
-
-# Encryption key for token storage (generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-# Must be exactly 64 hex characters (32 bytes)
-ENCRYPTION_KEY=your_64_character_hex_encryption_key_here
-
-# Database Configuration
-DATABASE_URL=postgresql://username:password@localhost:5432/timely
-
-# Environment
-NODE_ENV=development
-```
-
-#### Frontend (`packages/frontend/.env.local`)
-```bash
-# Google OAuth (different from backend - for client-side usage)
-VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
-
-# API endpoint for backend (optional, defaults to http://localhost:3000)
-VITE_API_BASE_URL=http://localhost:3000
-```
-
-### Google OAuth Setup
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Google Calendar API
-4. Configure OAuth consent screen
-5. Create OAuth 2.0 credentials (Web application)
-6. Add authorized redirect URIs:
-   - `http://localhost:3000/auth/google/callback` (development)
-   - Your production domain callback URL
-7. Copy the Client ID and Client Secret to your `.env` file
-8. Generate an encryption key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-
-### Database Setup
-1. Install PostgreSQL
-2. Create a database named `timely`
-3. Update `DATABASE_URL` in `.env` with your connection string
-4. Run migrations: `bun run --cwd packages/backend migrate:run`
-
-### Build Configuration
-- **Vite Config**: `packages/frontend/vite.config.ts`
-- **Backend Config**: `packages/backend/tsconfig.json`
-- **Shared Config**: `packages/shared/tsconfig.json`
-- Path aliases: `@` → `src/`
+### Setup Requirements
+- **Google OAuth Setup**: Configure Google Cloud Console for Calendar API access
+- **Database Setup**: PostgreSQL configuration and migration setup
+- **Build Configuration**: Vite, TypeScript, and package-specific build settings
 
 ## Key Data Models
 
-### User Tokens Interface
-```typescript
-interface UserTokens {
-  userId: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiryDate?: number;
-  email: string;
-  name: string;
-  picture: string;
-}
-```
+All shared data models and TypeScript interfaces are defined in the [Shared Package](./packages/shared/AGENTS.md#key-data-models), including:
 
-### Calendar Interface
-```typescript
-interface Calendar {
-  id: string;
-  summary: string;
-  primary?: boolean;
-  backgroundColor?: string;
-  isEnabled?: boolean;
-  events?: CalendarEvent[];
-}
-```
+- User and authentication interfaces
+- Calendar and event data structures
+- Category definitions
+- API response types
+- Configuration interfaces
 
-### CalendarEvent Interface
-```typescript
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  start: { dateTime?: string; date?: string; };
-  end: { dateTime?: string; date?: string; };
-  location?: string;
-  description?: string;
-}
-```
-
-### Category Interface
-```typescript
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  keywords: string[];
-  target: number; // percentage (0-100)
-}
-```
-
-### Important Event Settings
-```typescript
-interface ImportantEventSettings {
-  keywords: string[];
-  enabled: boolean;
-  displayLimit: number;
-}
-```
+See the [Shared Package documentation](./packages/shared/AGENTS.md) for complete type definitions.
 
 ## Deployment
 
@@ -410,35 +202,38 @@ The application uses a complete server-side OAuth 2.0 flow:
 
 ## Agent Instructions
 
+### General Guidelines
 When working with this codebase:
 
-1. **Follow Vue 3 Composition API patterns** - use `<script setup>` syntax
-2. **Maintain TypeScript types** - ensure all interfaces are properly typed
-3. **Use existing stores** - leverage Pinia stores for state management
-4. **Follow Tailwind/DaisyUI patterns** - use utility classes and DaisyUI components
-5. **Preserve mock data structure** - maintain realistic test data for development
-6. **Consider print styles** - the app has print optimization for calendar views
-7. **Check package.json scripts** - use `bun` commands for all operations
-8. **Maintain responsive design** - ensure mobile compatibility
-9. **Follow existing naming conventions** - kebab-case for files, camelCase for variables
-10. **Test type checking** - run `bun run type-check` after changes
-11. **Parent-controlled visibility** - whether a component should be displayed or hidden is determined by the parent component, not by conditional rendering within the component itself
-12. **Dev Server** - Ask the human to run the development server if it is not already running on port 3000. The dev server automatically restarts when changes are made.
-13. **Environment Variables** - Document these in AGENTS.md instead of .env.example files so there is one source of truth for the configuration.
+1. **Package-specific instructions** - Refer to each package's AGENTS.md for detailed development guidelines:
+   - [Frontend Package](./packages/frontend/AGENTS.md#agent-instructions)
+   - [Backend Package](./packages/backend/AGENTS.md#agent-instructions)
+   - [Shared Package](./packages/shared/AGENTS.md#agent-instructions)
+
+2. **TypeScript consistency** - Use types from the shared package across all components
+3. **Package manager** - Use `bun` for all dependency and script operations
+4. **Environment variables** - Document configuration in package-specific AGENTS.md files
+5. **Development workflow** - Follow the monorepo structure for cross-package development
+6. **Dev Server** - Ask the human to run the development server if it is not already running on port 3000. The dev server automatically restarts when changes are made.
 
 ## Development Workflow
 
 ### Getting Started
 1. **Clone the repository**
 2. **Install dependencies**: `bun install`
-3. **Set up environment variables** (see Configuration section)
+3. **Set up environment variables** (see package-specific configuration)
 4. **Set up database** and run migrations
 5. **Start development servers**: `bun dev`
 
+### Package-Specific Workflows
+- **[Frontend Development](./packages/frontend/AGENTS.md#development-workflow)**: Component development and testing
+- **[Backend Development](./packages/backend/AGENTS.md#development-workflow)**: API development and database management
+- **[Shared Development](./packages/shared/AGENTS.md#development-workflow)**: Type and utility development
+
 ### Code Quality
-- **Linting**: Run `bun run type-check` before committing
-- **Testing**: Run `bun test:unit` for frontend tests
-- **Database**: Run `bun run --cwd packages/backend migrate:status` to check migrations
+- **Type checking**: Run package-specific type checking commands
+- **Testing**: Execute tests in each package as needed
+- **Database**: Check migration status before deployment
 
 ### Deployment
 - **Build**: `bun run build` (builds both frontend and backend)
