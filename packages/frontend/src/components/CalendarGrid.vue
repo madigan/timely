@@ -245,81 +245,77 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useCalendarStore } from "@/stores/calendars";
-import { useCategoryStore, type Category } from "@/stores/categories";
-import { useImportantEventsStore } from "@/stores/importantEvents";
-import { filterImportantEvents } from "@/utils/events";
-import CalendarMonth from "./CalendarMonth.vue";
-import ImportantEventsPanel from "./ImportantEventsPanel.vue";
-import MonthlyStatsPanel from "./MonthlyStatsPanel.vue";
-import ImportantEventsSettings from "./ImportantEventsSettings.vue";
-import CategorySettings from "./CategorySettings.vue";
-import CategoryModal, { type CategoryFormData } from "./CategoryModal.vue";
+import { computed, onMounted, ref } from "vue"
+import { useCalendarStore } from "@/stores/calendars"
+import { type Category, useCategoryStore } from "@/stores/categories"
+import { useImportantEventsStore } from "@/stores/importantEvents"
+import { filterImportantEvents } from "@/utils/events"
+import CalendarMonth from "./CalendarMonth.vue"
+import CategoryModal, { type CategoryFormData } from "./CategoryModal.vue"
+import CategorySettings from "./CategorySettings.vue"
+import ImportantEventsPanel from "./ImportantEventsPanel.vue"
+import ImportantEventsSettings from "./ImportantEventsSettings.vue"
+import MonthlyStatsPanel from "./MonthlyStatsPanel.vue"
 
-const calendarStore = useCalendarStore();
-const categoryStore = useCategoryStore();
-const importantEventsStore = useImportantEventsStore();
+const calendarStore = useCalendarStore()
+const categoryStore = useCategoryStore()
+const importantEventsStore = useImportantEventsStore()
 
-const showModal = ref(false);
-const showImportantEventsModal = ref(false);
-const showCategorySettingsModal = ref(false);
-const showAddCategoryModal = ref(false);
-const showEditCategoryModal = ref(false);
-const showDeleteCategoryModal = ref(false);
-const editingCategory = ref<Category | null>(null);
-const categoryToDelete = ref<Category | null>(null);
-const selectedDay = ref<any>(null);
-const allEvents = ref<any[]>([]);
+const showModal = ref(false)
+const showImportantEventsModal = ref(false)
+const showCategorySettingsModal = ref(false)
+const showAddCategoryModal = ref(false)
+const showEditCategoryModal = ref(false)
+const showDeleteCategoryModal = ref(false)
+const editingCategory = ref<Category | null>(null)
+const categoryToDelete = ref<Category | null>(null)
+const selectedDay = ref<any>(null)
+const allEvents = ref<any[]>([])
 
 // Date range controls
-const now = new Date();
-const fromDate = ref(
-  formatDateForInput(new Date(now.getFullYear(), now.getMonth(), 1))
-);
-const toDate = ref(
-  formatDateForInput(new Date(now.getFullYear(), now.getMonth() + 2, 0))
-);
+const now = new Date()
+const fromDate = ref(formatDateForInput(new Date(now.getFullYear(), now.getMonth(), 1)))
+const toDate = ref(formatDateForInput(new Date(now.getFullYear(), now.getMonth() + 2, 0)))
 
 const monthsInRange = computed(() => {
-  const start = new Date(fromDate.value);
-  const end = new Date(toDate.value);
-  const months = [];
+  const start = new Date(fromDate.value)
+  const end = new Date(toDate.value)
+  const months = []
 
   // Start from the first day of the month containing the start date
-  const current = new Date(start.getFullYear(), start.getMonth(), 1);
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const current = new Date(start.getFullYear(), start.getMonth(), 1)
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
 
   // Use string comparison for consistent date handling
-  const startDateStr = start.toISOString().split("T")[0];
-  const endDateStr = end.toISOString().split("T")[0];
+  const startDateStr = start.toISOString().split("T")[0]
+  const endDateStr = end.toISOString().split("T")[0]
 
   while (current <= end) {
-    const year = current.getFullYear();
-    const month = current.getMonth();
-    const isCurrent = year === currentYear && month === currentMonth;
+    const year = current.getFullYear()
+    const month = current.getMonth()
+    const isCurrent = year === currentYear && month === currentMonth
 
     // Check if this month overlaps with our date range
-    const monthStart = new Date(year, month, 1);
-    const monthEnd = new Date(year, month + 1, 0);
-    const monthStartStr = monthStart.toISOString().split("T")[0];
-    const monthEndStr = monthEnd.toISOString().split("T")[0];
+    const monthStart = new Date(year, month, 1)
+    const monthEnd = new Date(year, month + 1, 0)
+    const monthStartStr = monthStart.toISOString().split("T")[0]
+    const monthEndStr = monthEnd.toISOString().split("T")[0]
 
     // Only include months that actually overlap with the selected range
     if (monthEndStr >= startDateStr && monthStartStr <= endDateStr) {
       // Filter events for this month within the date range
       const monthEvents = allEvents.value.filter((event) => {
-        const eventDate = new Date(event.start.dateTime || event.start.date);
-        const eventDateStr = eventDate.toISOString().split("T")[0];
+        const eventDate = new Date(event.start.dateTime || event.start.date)
+        const eventDateStr = eventDate.toISOString().split("T")[0]
         // Check if event is within the date range AND within this specific month
         return (
           eventDateStr >= startDateStr &&
           eventDateStr <= endDateStr &&
           eventDateStr >= monthStartStr &&
           eventDateStr <= monthEndStr
-        );
-      });
+        )
+      })
 
       // Get important events for this month
       const importantEvents = importantSettings.enabled
@@ -328,10 +324,10 @@ const monthsInRange = computed(() => {
             importantSettings.keywords,
             importantSettings.displayLimit
           )
-        : [];
+        : []
 
       // Calculate category analytics for this month
-      const categoryAnalytics = calculateMonthCategoryAnalytics(monthEvents);
+      const categoryAnalytics = calculateMonthCategoryAnalytics(monthEvents)
 
       months.push({
         year,
@@ -341,134 +337,129 @@ const monthsInRange = computed(() => {
         events: monthEvents,
         importantEvents,
         categoryAnalytics,
-      });
+      })
     }
 
-    current.setMonth(current.getMonth() + 1);
+    current.setMonth(current.getMonth() + 1)
   }
 
-  return months;
-});
+  return months
+})
 
-const { categories } = categoryStore;
-const { settings: importantSettings } = importantEventsStore;
+const { categories } = categoryStore
+const { settings: importantSettings } = importantEventsStore
 
 onMounted(async () => {
-  await loadEvents();
-});
+  await loadEvents()
+})
 
 async function loadEvents() {
-  const calendars = await calendarStore.getCalendars();
-  const enabledCalendars = calendars.filter((cal) => cal.isEnabled);
+  // First load calendars to ensure they're available
+  await calendarStore.getCalendars()
 
-  const events: any[] = [];
+  // Get all events from enabled calendars for the current date range
+  const startDate = new Date(fromDate.value)
+  const endDate = new Date(toDate.value)
 
-  for (const calendar of enabledCalendars) {
-    const calendarEvents = await calendarStore.getEvents(calendar.id);
-    events.push(...calendarEvents);
-  }
+  const events = await calendarStore.getAllEvents(startDate.toISOString(), endDate.toISOString())
 
-  allEvents.value = events;
+  allEvents.value = events
 }
 
 function resetToDefault() {
-  const now = new Date();
-  fromDate.value = formatDateForInput(
-    new Date(now.getFullYear(), now.getMonth(), 1)
-  );
-  toDate.value = formatDateForInput(
-    new Date(now.getFullYear(), now.getMonth() + 2, 0)
-  );
+  const now = new Date()
+  fromDate.value = formatDateForInput(new Date(now.getFullYear(), now.getMonth(), 1))
+  toDate.value = formatDateForInput(new Date(now.getFullYear(), now.getMonth() + 2, 0))
 }
 
 function formatDateForInput(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return date.toISOString().split("T")[0]
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = new Date(startDate)
+  const end = new Date(endDate)
 
   const startStr = start.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
-  });
+  })
 
   const endStr = end.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
-  });
+  })
 
-  return `${startStr} - ${endStr}`;
+  return `${startStr} - ${endStr}`
 }
 
 function showDayDetails(dayCell: any) {
-  selectedDay.value = dayCell;
-  showModal.value = true;
+  selectedDay.value = dayCell
+  showModal.value = true
 }
 
 function closeModal() {
-  showModal.value = false;
-  selectedDay.value = null;
+  showModal.value = false
+  selectedDay.value = null
 }
 
 function openImportantEventsSettings() {
-  showImportantEventsModal.value = true;
+  showImportantEventsModal.value = true
 }
 
 function closeImportantEventsModal() {
-  showImportantEventsModal.value = false;
+  showImportantEventsModal.value = false
 }
 
 function openCategorySettings() {
-  showCategorySettingsModal.value = true;
+  showCategorySettingsModal.value = true
 }
 
 function closeCategorySettingsModal() {
-  showCategorySettingsModal.value = false;
+  showCategorySettingsModal.value = false
 }
 
 function editCategory(category: Category) {
-  editingCategory.value = category;
-  showEditCategoryModal.value = true;
+  editingCategory.value = category
+  showEditCategoryModal.value = true
 }
 
 function confirmDeleteCategory(category: Category) {
-  categoryToDelete.value = category;
-  showDeleteCategoryModal.value = true;
+  categoryToDelete.value = category
+  showDeleteCategoryModal.value = true
 }
 
 function deleteCategory() {
   if (categoryToDelete.value) {
-    categoryStore.deleteCategory(categoryToDelete.value.id);
-    showDeleteCategoryModal.value = false;
-    categoryToDelete.value = null;
+    categoryStore.deleteCategory(categoryToDelete.value.id)
+    showDeleteCategoryModal.value = false
+    categoryToDelete.value = null
   }
 }
 
 function saveCategory(data: CategoryFormData) {
   if (editingCategory.value) {
-    categoryStore.updateCategory(editingCategory.value.id, data);
+    categoryStore.updateCategory(editingCategory.value.id, data)
   } else {
-    categoryStore.addCategory(data);
+    categoryStore.addCategory(data)
   }
-  closeCategoryModal();
+  closeCategoryModal()
 }
 
 function closeCategoryModal() {
-  showAddCategoryModal.value = false;
-  showEditCategoryModal.value = false;
-  editingCategory.value = null;
+  showAddCategoryModal.value = false
+  showEditCategoryModal.value = false
+  editingCategory.value = null
 }
 
 function formatSelectedDate(dayCell: any) {
   // Find the month that contains this day cell
   for (const month of monthsInRange.value) {
-    const monthStart = new Date(month.year, month.month, 1);
-    const monthEnd = new Date(month.year, month.month + 1, 0);
-    const cellDate = new Date(month.year, month.month, dayCell.date);
+    const monthStart = new Date(month.year, month.month, 1)
+    const monthEnd = new Date(month.year, month.month + 1, 0)
+    const cellDate = new Date(month.year, month.month, dayCell.date)
 
     if (cellDate >= monthStart && cellDate <= monthEnd) {
       return cellDate.toLocaleDateString("en-US", {
@@ -476,20 +467,20 @@ function formatSelectedDate(dayCell: any) {
         year: "numeric",
         month: "long",
         day: "numeric",
-      });
+      })
     }
   }
 
   // Fallback: use current date context
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const date = new Date(currentYear, currentMonth, dayCell.date);
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+  const date = new Date(currentYear, currentMonth, dayCell.date)
   return date.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-  });
+  })
 }
 
 function onEventExpanded(eventId: string, monthKey: string) {
@@ -499,10 +490,10 @@ function onEventExpanded(eventId: string, monthKey: string) {
 
 function calculateMonthCategoryAnalytics(monthEvents: any[]) {
   // Get total hours for all events in the month
-  let totalHours = 0;
+  let totalHours = 0
   const categoryStats: {
-    [key: string]: { hours: number; count: number; category: Category };
-  } = {};
+    [key: string]: { hours: number; count: number; category: Category }
+  } = {}
 
   // Initialize category stats
   categories.forEach((category) => {
@@ -510,31 +501,30 @@ function calculateMonthCategoryAnalytics(monthEvents: any[]) {
       hours: 0,
       count: 0,
       category,
-    };
-  });
+    }
+  })
 
   // Calculate hours for each event
   monthEvents.forEach((event: any) => {
-    const startTime = new Date(event.start.dateTime || event.start.date);
-    const endTime = new Date(event.end.dateTime || event.end.date);
-    const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    const startTime = new Date(event.start.dateTime || event.start.date)
+    const endTime = new Date(event.end.dateTime || event.end.date)
+    const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 
     // Categorize event based on keywords
-    const matchedCategory = categorizeEvent(event);
+    const matchedCategory = categorizeEvent(event)
     if (matchedCategory) {
-      categoryStats[matchedCategory.id].hours += hours;
-      categoryStats[matchedCategory.id].count += 1;
+      categoryStats[matchedCategory.id].hours += hours
+      categoryStats[matchedCategory.id].count += 1
     }
 
-    totalHours += hours;
-  });
+    totalHours += hours
+  })
 
   // Calculate compact analytics data - only show categories with events
   return categories
     .map((category) => {
-      const stats = categoryStats[category.id];
-      const actualPercentage =
-        totalHours > 0 ? (stats.hours / totalHours) * 100 : 0;
+      const stats = categoryStats[category.id]
+      const actualPercentage = totalHours > 0 ? (stats.hours / totalHours) * 100 : 0
 
       return {
         id: category.id,
@@ -544,30 +534,22 @@ function calculateMonthCategoryAnalytics(monthEvents: any[]) {
         actualPercentage,
         eventCount: stats.count,
         hours: stats.hours,
-      };
+      }
     })
     .filter((cat) => cat.eventCount > 0) // Only show categories with events
-    .sort((a, b) => b.target - a.target); // Sort by target percentage (descending)
+    .sort((a, b) => b.target - a.target) // Sort by target percentage (descending)
 }
 
 function categorizeEvent(event: any): Category | null {
-  const eventText = (
-    (event.summary || "") +
-    " " +
-    (event.description || "")
-  ).toLowerCase();
+  const eventText = ((event.summary || "") + " " + (event.description || "")).toLowerCase()
 
   // Find the first category whose keywords match the event
   for (const category of categories) {
-    if (
-      category.keywords.some((keyword) =>
-        eventText.includes(keyword.toLowerCase())
-      )
-    ) {
-      return category;
+    if (category.keywords.some((keyword) => eventText.includes(keyword.toLowerCase()))) {
+      return category
     }
   }
 
-  return null;
+  return null
 }
 </script>

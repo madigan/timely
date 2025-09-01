@@ -83,39 +83,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { formatEventDateTime, shortenEventTitle } from "@/utils/events";
+import { ref } from "vue"
+import { formatEventDateTime, shortenEventTitle } from "@/utils/events"
 
 interface Props {
-  events: any[];
-  monthKey: string;
+  events: any[]
+  monthKey: string
 }
 
 interface Emits {
-  (e: 'eventExpanded', eventId: string, monthKey: string): void;
-  (e: 'open-settings'): void;
+  (e: "eventExpanded", eventId: string, monthKey: string): void
+  (e: "open-settings"): void
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 // Local state for expanded events (per accordion instance)
-const expandedEvent = ref<string | null>(null);
+const expandedEvent = ref<string | null>(null)
 
 function toggleEventExpansion(eventId: string) {
   if (expandedEvent.value === eventId) {
     // If this event is already expanded, collapse it
-    expandedEvent.value = null;
+    expandedEvent.value = null
   } else {
     // Expand this event (automatically collapses any other expanded event)
-    expandedEvent.value = eventId;
+    expandedEvent.value = eventId
   }
-  
+
   // Emit event for parent component tracking if needed
-  emit('eventExpanded', eventId, props.monthKey);
+  emit("eventExpanded", eventId, props.monthKey)
 }
 
 function isEventExpanded(eventId: string): boolean {
-  return expandedEvent.value === eventId;
+  return expandedEvent.value === eventId
 }
 </script>

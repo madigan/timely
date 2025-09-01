@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: timely-postgres
+    environment:
+      POSTGRES_DB: timely
+      POSTGRES_USER: timely_user
+      POSTGRES_PASSWORD: timely_password
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timely_user -d timely"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+

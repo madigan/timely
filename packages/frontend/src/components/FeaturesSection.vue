@@ -85,9 +85,7 @@
 </template>
 
 <script setup lang="ts">
-interface Emits {
-  (e: 'getStarted'): void;
-}
+type Emits = (e: "getStarted") => void
 
-defineEmits<Emits>();
+defineEmits<Emits>()
 </script>
