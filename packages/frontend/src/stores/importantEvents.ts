@@ -13,6 +13,16 @@ export interface ImportantEventSettings {
   displayLimit: number
 }
 
+interface ImportantEventSettingsResponse {
+  id: string
+  userId: string
+  keywords: string[]
+  enabled: boolean
+  displayLimit: number
+  createdAt: string
+  updatedAt: string
+}
+
 export const useImportantEventsStore = defineStore("importantEvents", () => {
   const settings = ref<ImportantEventSettings>({
     keywords: ["important", "urgent", "critical", "deadline", "meeting", "board", "emergency"],
@@ -20,55 +30,138 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
     displayLimit: 3,
   })
 
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
+  const initialized = ref(false)
+
+  /**
+   * Load settings from the API
+   */
+  async function loadSettings(): Promise<void> {
+    if (initialized.value) return
+    
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await fetch("/important-events/settings", {
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const data: ImportantEventSettingsResponse = await response.json()
+        settings.value = {
+          keywords: data.keywords,
+          enabled: data.enabled,
+          displayLimit: data.displayLimit,
+        }
+        initialized.value = true
+      } else {
+        throw new Error(`Failed to load settings: ${response.statusText}`)
+      }
+    } catch (err) {
+      console.error("Error loading important event settings:", err)
+      error.value = err instanceof Error ? err.message : "Failed to load settings"
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Save settings to the API
+   */
+  async function saveSettings(): Promise<void> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await fetch("/important-events/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(settings.value),
+      })
+
+      if (response.ok) {
+        const data: ImportantEventSettingsResponse = await response.json()
+        // Update local settings with server response to ensure consistency
+        settings.value = {
+          keywords: data.keywords,
+          enabled: data.enabled,
+          displayLimit: data.displayLimit,
+        }
+      } else {
+        throw new Error(`Failed to save settings: ${response.statusText}`)
+      }
+    } catch (err) {
+      console.error("Error saving important event settings:", err)
+      error.value = err instanceof Error ? err.message : "Failed to save settings"
+      throw err // Re-throw so UI can handle the error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   /**
    * Add a new keyword for identifying important events
    */
-  function addKeyword(keyword: string) {
+  async function addKeyword(keyword: string): Promise<void> {
     const trimmed = keyword.trim().toLowerCase()
     if (trimmed && !settings.value.keywords.includes(trimmed)) {
       settings.value.keywords.push(trimmed)
+      await saveSettings()
     }
   }
 
   /**
    * Remove a keyword from the important events list
    */
-  function removeKeyword(keyword: string) {
+  async function removeKeyword(keyword: string): Promise<void> {
     const index = settings.value.keywords.indexOf(keyword.toLowerCase())
     if (index !== -1) {
       settings.value.keywords.splice(index, 1)
+      await saveSettings()
     }
   }
 
   /**
    * Toggle whether important events feature is enabled
    */
-  function toggleEnabled() {
+  async function toggleEnabled(): Promise<void> {
     settings.value.enabled = !settings.value.enabled
+    await saveSettings()
   }
 
   /**
    * Set the maximum number of important events to display per month
    */
-  function setDisplayLimit(limit: number) {
+  async function setDisplayLimit(limit: number): Promise<void> {
     if (limit > 0 && limit <= 20) {
       settings.value.displayLimit = limit
+      await saveSettings()
     }
   }
 
   /**
    * Reset settings to defaults
    */
-  function resetToDefaults() {
+  async function resetToDefaults(): Promise<void> {
     settings.value = {
       keywords: ["important", "urgent", "critical", "deadline", "meeting", "board", "emergency"],
       enabled: true,
-      displayLimit: 5,
+      displayLimit: 3,
     }
+    await saveSettings()
   }
 
   return {
     settings,
+    isLoading,
+    error,
+    initialized,
+    loadSettings,
     addKeyword,
     removeKeyword,
     toggleEnabled,

@@ -1,5 +1,6 @@
 import { sql } from "../db/database.service.ts"
 import { decryptToken, encryptToken } from "./oauth.ts"
+import { createDefaultImportantEventSettings } from "../importantEvents/importantEvents.service.ts"
 
 export interface UserTokens {
   userId: string
@@ -16,6 +17,12 @@ export async function storeUserTokens(tokens: UserTokens): Promise<void> {
   try {
     const encryptedAccessToken = encryptToken(tokens.accessToken)
     const encryptedRefreshToken = tokens.refreshToken ? encryptToken(tokens.refreshToken) : null
+
+    // Check if this is a new user by checking if they exist
+    const existingUser = await sql`
+      SELECT id FROM users WHERE id = ${tokens.userId}
+    `
+    const isNewUser = existingUser.length === 0
 
     await sql`
       INSERT INTO users
@@ -40,6 +47,17 @@ export async function storeUserTokens(tokens: UserTokens): Promise<void> {
         picture = EXCLUDED.picture,
         updated_at = CURRENT_TIMESTAMP
     `
+
+    // Create default important event settings for new users
+    if (isNewUser) {
+      try {
+        await createDefaultImportantEventSettings(tokens.userId)
+        console.log(`✅ Created default important event settings for new user: ${tokens.email}`)
+      } catch (error) {
+        console.error("Failed to create default important event settings:", error)
+        // Don't throw - user creation should not fail due to this
+      }
+    }
   } catch (error) {
     console.error("Error storing user tokens:", error)
     throw error

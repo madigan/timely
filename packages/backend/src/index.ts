@@ -5,6 +5,7 @@ import { Elysia } from "elysia"
 import { authRoutes } from "./routes/auth.routes.ts"
 import { calendarRoutes } from "./routes/calendar.routes.ts"
 import { categoryRoutes } from "./routes/categories.routes.ts"
+import { importantEventsRoutes } from "./routes/importantEvents.routes.ts"
 
 const PORT = process.env.PORT || 3000
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || die("ENCRYPTION_KEY must be defined.")
@@ -64,6 +65,8 @@ const app = new Elysia({
   .use(calendarRoutes)
   // Categories API routes
   .use(categoryRoutes)
+  // Important Events API routes
+  .use(importantEventsRoutes)
   // SPA fallback - serve index.html for non-API routes
   .get("/*", ({ path, set }) => {
     // Don't catch API or auth routes
