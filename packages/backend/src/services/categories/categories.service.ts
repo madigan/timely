@@ -67,7 +67,7 @@ export async function getCategoriesByUserId(userId: string): Promise<Category[]>
         FROM categories 
         WHERE user_id = ${userId}
         ORDER BY name
-      `;
+      `
 }
 
 export async function deleteById(userId: string, categoryId: string): Promise<string> {

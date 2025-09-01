@@ -1,8 +1,7 @@
-import { SQL } from "bun"
 import { readdir } from "node:fs/promises"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { dirname } from "node:path"
+import { SQL } from "bun"
 import { databaseUrl } from "./database.env"
 
 const __filename = fileURLToPath(import.meta.url)

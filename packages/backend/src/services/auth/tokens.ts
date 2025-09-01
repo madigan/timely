@@ -1,5 +1,5 @@
-import { encryptToken, decryptToken } from "./oauth.ts"
 import { sql } from "../db/database.service.ts"
+import { decryptToken, encryptToken } from "./oauth.ts"
 
 export interface UserTokens {
   userId: string

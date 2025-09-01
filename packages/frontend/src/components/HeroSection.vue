@@ -38,16 +38,14 @@
 </template>
 
 <script setup lang="ts">
-interface Emits {
-  (e: 'login'): void;
-}
+type Emits = (e: "login") => void
 
-defineEmits<Emits>();
+defineEmits<Emits>()
 
 function scrollToFeatures() {
-  const featuresEl = document.getElementById('features');
+  const featuresEl = document.getElementById("features")
   if (featuresEl) {
-    featuresEl.scrollIntoView({ behavior: 'smooth' });
+    featuresEl.scrollIntoView({ behavior: "smooth" })
   }
 }
 </script>

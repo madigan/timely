@@ -108,34 +108,34 @@
 </template>
 
 <script setup lang="ts">
-import type { Category } from "@/stores/categories";
+import type { Category } from "@/stores/categories"
 
 interface MonthData {
-  name: string;
-  year: number;
-  month: number;
-  events: any[];
+  name: string
+  year: number
+  month: number
+  events: any[]
 }
 
 interface CategoryAnalytics {
-  id: string;
-  name: string;
-  color: string;
-  target: number;
-  actualPercentage: number;
-  eventCount: number;
-  hours: number;
+  id: string
+  name: string
+  color: string
+  target: number
+  actualPercentage: number
+  eventCount: number
+  hours: number
 }
 
 interface Props {
-  isOpen: boolean;
-  selectedMonth: MonthData | null;
-  analytics: CategoryAnalytics[];
+  isOpen: boolean
+  selectedMonth: MonthData | null
+  analytics: CategoryAnalytics[]
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
 defineEmits<{
-  close: [];
-}>();
+  close: []
+}>()
 </script>

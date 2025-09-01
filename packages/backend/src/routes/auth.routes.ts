@@ -1,20 +1,20 @@
 import { Elysia } from "elysia"
+import { isProduction } from "../env.ts"
+import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "../services/auth/auth.env.ts"
 import {
-  oauth2Client,
   CALENDAR_SCOPES,
   generateCSRFState,
   getUserInfo,
+  oauth2Client,
 } from "../services/auth/oauth.ts"
 import {
-  storeUserTokens,
   createSession,
   deleteSession,
-  getSessionUserId,
   deleteUserTokens,
+  getSessionUserId,
+  storeUserTokens,
 } from "../services/auth/tokens.ts"
-import { getUserProfile } from "../services/calendar.ts"
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "../services/auth/auth.env.ts"
-import { isProduction } from "../env.ts"
+import { getUserProfile } from "../services/calendar/calendar.ts"
 
 // CSRF state storage (in production, use Redis)
 const csrfStates = new Map<string, number>() // state -> timestamp
@@ -62,7 +62,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     // Set oauth_state cookie using ElysiaJS built-in reactive cookies
     cookie.oauth_state.value = state
     cookie.oauth_state.httpOnly = true
-    cookie.oauth_state.secure = isProduction();
+    cookie.oauth_state.secure = isProduction()
     cookie.oauth_state.sameSite = "lax" // Allow cookie to be sent on OAuth redirects
     cookie.oauth_state.maxAge = 600 // 10 minutes
 
@@ -185,7 +185,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       const profile = await getUserProfile(userId)
       return profile
     } catch (error) {
-      console.error("[Auth]", "Failed to get profile:", error);
+      console.error("[Auth]", "Failed to get profile:", error)
       set.status = 500
       return { error: "Failed to get profile" }
     }

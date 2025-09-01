@@ -90,31 +90,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useImportantEventsStore } from "@/stores/importantEvents";
+import { ref } from "vue"
+import { useImportantEventsStore } from "@/stores/importantEvents"
 
-const importantEventsStore = useImportantEventsStore();
-const { settings: importantSettings } = importantEventsStore;
+const importantEventsStore = useImportantEventsStore()
+const { settings: importantSettings } = importantEventsStore
 
-const newKeyword = ref("");
+const newKeyword = ref("")
 
 function addKeyword() {
   if (newKeyword.value.trim()) {
-    importantEventsStore.addKeyword(newKeyword.value.trim());
-    newKeyword.value = "";
+    importantEventsStore.addKeyword(newKeyword.value.trim())
+    newKeyword.value = ""
   }
 }
 
 function removeKeyword(keyword: string) {
-  importantEventsStore.removeKeyword(keyword);
+  importantEventsStore.removeKeyword(keyword)
 }
 
 function updateDisplayLimit(event: Event) {
-  const target = event.target as HTMLInputElement;
-  importantEventsStore.setDisplayLimit(parseInt(target.value));
+  const target = event.target as HTMLInputElement
+  importantEventsStore.setDisplayLimit(parseInt(target.value))
 }
 
 function resetImportantSettings() {
-  importantEventsStore.resetToDefaults();
+  importantEventsStore.resetToDefaults()
 }
 </script>

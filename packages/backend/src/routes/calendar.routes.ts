@@ -1,7 +1,7 @@
+import type { ApiResponse, Calendar, CalendarEvent } from "@timely/shared"
 import { Elysia } from "elysia"
+import { getCalendarEvents, getUserCalendars } from "../services/calendar/calendar.ts"
 import { requireAuth } from "./auth.routes.ts"
-import { getUserCalendars, getCalendarEvents } from "../services/calendar.ts"
-import type { Calendar, CalendarEvent, ApiResponse } from "@timely/shared"
 
 export const calendarRoutes = new Elysia({ prefix: "/api" })
   .use(requireAuth())

@@ -98,39 +98,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import type { Category } from "@/stores/categories";
+import { ref, watch } from "vue"
+import type { Category } from "@/stores/categories"
 
 export interface CategoryFormData {
-  name: string;
-  color: string;
-  keywords: string[];
-  target: number;
+  name: string
+  color: string
+  keywords: string[]
+  target: number
 }
 
 interface Props {
-  isOpen: boolean;
-  editingCategory?: Category | null;
+  isOpen: boolean
+  editingCategory?: Category | null
 }
 
 interface Emits {
-  (e: "close"): void;
-  (e: "save", data: CategoryFormData): void;
+  (e: "close"): void
+  (e: "save", data: CategoryFormData): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   editingCategory: null,
-});
+})
 
-const emit = defineEmits<Emits>();
+const emit = defineEmits<Emits>()
 
-const newKeyword = ref("");
+const newKeyword = ref("")
 const form = ref<CategoryFormData>({
   name: "",
   color: "#3B82F6",
   keywords: [],
   target: 10,
-});
+})
 
 // Watch for changes to editingCategory to populate form
 watch(
@@ -142,44 +142,44 @@ watch(
         color: category.color,
         keywords: [...category.keywords],
         target: category.target,
-      };
+      }
     } else {
-      resetForm();
+      resetForm()
     }
   },
   { immediate: true }
-);
+)
 
 // Watch for modal close to reset form
 watch(
   () => props.isOpen,
   (isOpen) => {
     if (!isOpen) {
-      newKeyword.value = "";
+      newKeyword.value = ""
     }
   }
-);
+)
 
 function addKeyword() {
-  const keyword = newKeyword.value.trim();
+  const keyword = newKeyword.value.trim()
   if (keyword && !form.value.keywords.includes(keyword)) {
-    form.value.keywords.push(keyword);
-    newKeyword.value = "";
+    form.value.keywords.push(keyword)
+    newKeyword.value = ""
   }
 }
 
 function removeKeyword(index: number) {
-  form.value.keywords.splice(index, 1);
+  form.value.keywords.splice(index, 1)
 }
 
 function handleSave() {
-  emit("save", { ...form.value });
-  handleClose();
+  emit("save", { ...form.value })
+  handleClose()
 }
 
 function handleClose() {
-  emit("close");
-  resetForm();
+  emit("close")
+  resetForm()
 }
 
 function resetForm() {
@@ -188,7 +188,7 @@ function resetForm() {
     color: "#3B82F6",
     keywords: [],
     target: 10,
-  };
-  newKeyword.value = "";
+  }
+  newKeyword.value = ""
 }
 </script>

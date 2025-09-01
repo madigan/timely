@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { RouterLink } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
+import { ref } from "vue"
+import { RouterLink } from "vue-router"
+import { useAuthStore } from "@/stores/auth"
 
-const { user, login, logout, isLoggedIn } = useAuthStore();
-const imageError = ref(false);
+const { user, login, logout, isLoggedIn } = useAuthStore()
+const imageError = ref(false)
 
 const handleImageError = () => {
-  imageError.value = true;
-};
+  imageError.value = true
+}
 
 const getUserInitials = (name?: string) => {
-  if (!name) return "U";
+  if (!name) return "U"
   return name
     .split(" ")
     .map((word) => word[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
-};
+    .slice(0, 2)
+}
 </script>
 
 <template>

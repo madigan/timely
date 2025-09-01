@@ -81,29 +81,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import type { Category } from "@/stores/categories";
-import {
-  categorizeEvent,
-  calculateEventDuration,
-  calculatePercentage,
-} from "@/utils/events";
-import { PRECISION, PERFORMANCE_THRESHOLDS } from "@/constants/display";
+import { computed } from "vue"
+import { PERFORMANCE_THRESHOLDS, PRECISION } from "@/constants/display"
+import type { Category } from "@/stores/categories"
+import { calculateEventDuration, calculatePercentage, categorizeEvent } from "@/utils/events"
 
 interface Props {
-  weekEvents: any[];
-  categories: Category[];
+  weekEvents: any[]
+  categories: Category[]
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
 const weeklyStats = computed(() => {
-  if (props.weekEvents.length === 0) return [];
+  if (props.weekEvents.length === 0) return []
 
   const categoryStats: {
-    [key: string]: { hours: number; count: number; category: Category };
-  } = {};
-  let totalHours = 0;
+    [key: string]: { hours: number; count: number; category: Category }
+  } = {}
+  let totalHours = 0
 
   // Initialize category stats
   props.categories.forEach((category) => {
@@ -111,28 +107,27 @@ const weeklyStats = computed(() => {
       hours: 0,
       count: 0,
       category,
-    };
-  });
+    }
+  })
 
   // Calculate hours for each event
   props.weekEvents.forEach((event) => {
-    const hours = calculateEventDuration(event);
-    totalHours += hours;
+    const hours = calculateEventDuration(event)
+    totalHours += hours
 
     // Categorize event based on keywords
-    const matchedCategory = categorizeEvent(event, props.categories);
+    const matchedCategory = categorizeEvent(event, props.categories)
     if (matchedCategory) {
-      categoryStats[matchedCategory.id].hours += hours;
-      categoryStats[matchedCategory.id].count += 1;
+      categoryStats[matchedCategory.id].hours += hours
+      categoryStats[matchedCategory.id].count += 1
     }
-  });
+  })
 
   // Convert to array and calculate actual vs target percentages
   return props.categories
     .map((category) => {
-      const stats = categoryStats[category.id];
-      const actualPercentage =
-        totalHours > 0 ? (stats.hours / totalHours) * 100 : 0;
+      const stats = categoryStats[category.id]
+      const actualPercentage = totalHours > 0 ? (stats.hours / totalHours) * 100 : 0
 
       return {
         id: category.id,
@@ -142,13 +137,13 @@ const weeklyStats = computed(() => {
         eventCount: stats.count,
         actualPercentage,
         target: category.target,
-      };
+      }
     })
     .filter((stat) => stat.eventCount > 0)
-    .sort((a, b) => b.target - a.target);
-});
+    .sort((a, b) => b.target - a.target)
+})
 
 const totalHours = computed(() => {
-  return weeklyStats.value.reduce((sum, stat) => sum + stat.hours, 0);
-});
+  return weeklyStats.value.reduce((sum, stat) => sum + stat.hours, 0)
+})
 </script>

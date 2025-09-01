@@ -91,17 +91,17 @@
 </template>
 
 <script setup lang="ts">
-import type { Category } from "@/stores/categories";
+import type { Category } from "@/stores/categories"
 
 interface Props {
-  categories: Category[];
+  categories: Category[]
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
 defineEmits<{
-  'add-category': [];
-  'edit-category': [category: Category];
-  'delete-category': [category: Category];
-}>();
+  "add-category": []
+  "edit-category": [category: Category]
+  "delete-category": [category: Category]
+}>()
 </script>

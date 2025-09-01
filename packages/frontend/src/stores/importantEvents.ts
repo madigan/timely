@@ -1,40 +1,32 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
+import { defineStore } from "pinia"
+import { ref } from "vue"
 
 /**
  * Settings for identifying and displaying important events
  */
 export interface ImportantEventSettings {
   /** Array of keywords used to identify important events */
-  keywords: string[];
+  keywords: string[]
   /** Whether the important events feature is enabled */
-  enabled: boolean;
+  enabled: boolean
   /** Maximum number of important events to display per month */
-  displayLimit: number;
+  displayLimit: number
 }
 
 export const useImportantEventsStore = defineStore("importantEvents", () => {
   const settings = ref<ImportantEventSettings>({
-    keywords: [
-      "important",
-      "urgent",
-      "critical",
-      "deadline",
-      "meeting",
-      "board",
-      "emergency",
-    ],
+    keywords: ["important", "urgent", "critical", "deadline", "meeting", "board", "emergency"],
     enabled: true,
     displayLimit: 3,
-  });
+  })
 
   /**
    * Add a new keyword for identifying important events
    */
   function addKeyword(keyword: string) {
-    const trimmed = keyword.trim().toLowerCase();
+    const trimmed = keyword.trim().toLowerCase()
     if (trimmed && !settings.value.keywords.includes(trimmed)) {
-      settings.value.keywords.push(trimmed);
+      settings.value.keywords.push(trimmed)
     }
   }
 
@@ -42,9 +34,9 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
    * Remove a keyword from the important events list
    */
   function removeKeyword(keyword: string) {
-    const index = settings.value.keywords.indexOf(keyword.toLowerCase());
+    const index = settings.value.keywords.indexOf(keyword.toLowerCase())
     if (index !== -1) {
-      settings.value.keywords.splice(index, 1);
+      settings.value.keywords.splice(index, 1)
     }
   }
 
@@ -52,7 +44,7 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
    * Toggle whether important events feature is enabled
    */
   function toggleEnabled() {
-    settings.value.enabled = !settings.value.enabled;
+    settings.value.enabled = !settings.value.enabled
   }
 
   /**
@@ -60,7 +52,7 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
    */
   function setDisplayLimit(limit: number) {
     if (limit > 0 && limit <= 20) {
-      settings.value.displayLimit = limit;
+      settings.value.displayLimit = limit
     }
   }
 
@@ -69,18 +61,10 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
    */
   function resetToDefaults() {
     settings.value = {
-      keywords: [
-        "important",
-        "urgent",
-        "critical",
-        "deadline",
-        "meeting",
-        "board",
-        "emergency",
-      ],
+      keywords: ["important", "urgent", "critical", "deadline", "meeting", "board", "emergency"],
       enabled: true,
       displayLimit: 5,
-    };
+    }
   }
 
   return {
@@ -90,5 +74,5 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
     toggleEnabled,
     setDisplayLimit,
     resetToDefaults,
-  };
-});
+  }
+})

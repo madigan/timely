@@ -1,44 +1,44 @@
 /**
  * Event Analytics Library
- * 
+ *
  * This library contains complex event analysis logic that can be unit tested.
  * It handles category analysis, performance calculations, and event processing.
  */
 
-import { categorizeEvent, calculateEventDuration, calculatePercentage } from "@/utils/events";
-import type { Category } from "@/stores/categories";
+import type { Category } from "@/stores/categories"
+import { calculateEventDuration, calculatePercentage, categorizeEvent } from "@/utils/events"
 
 export interface CalendarEvent {
-  id?: string;
-  summary: string;
-  description?: string;
-  start: { dateTime?: string; date?: string };
-  end: { dateTime?: string; date?: string };
-  location?: string;
+  id?: string
+  summary: string
+  description?: string
+  start: { dateTime?: string; date?: string }
+  end: { dateTime?: string; date?: string }
+  location?: string
 }
 
 export interface CategoryAnalytics {
-  id: string;
-  name: string;
-  color: string;
-  target: number;
-  actualPercentage: number;
-  eventCount: number;
-  hours: number;
+  id: string
+  name: string
+  color: string
+  target: number
+  actualPercentage: number
+  eventCount: number
+  hours: number
 }
 
 export interface CategoryStats {
   [categoryId: string]: {
-    hours: number;
-    count: number;
-    category: Category;
-  };
+    hours: number
+    count: number
+    category: Category
+  }
 }
 
 export interface EventsInDateRange {
-  events: CalendarEvent[];
-  startDate: Date;
-  endDate: Date;
+  events: CalendarEvent[]
+  startDate: Date
+  endDate: Date
 }
 
 /**
@@ -48,28 +48,28 @@ export function calculateCategoryStats(
   events: CalendarEvent[],
   categories: Category[]
 ): CategoryStats {
-  const stats: CategoryStats = {};
+  const stats: CategoryStats = {}
 
   // Initialize category stats
-  categories.forEach(category => {
+  categories.forEach((category) => {
     stats[category.id] = {
       hours: 0,
       count: 0,
-      category
-    };
-  });
+      category,
+    }
+  })
 
   // Process each event
-  events.forEach(event => {
-    const category = categorizeEvent(event, categories);
+  events.forEach((event) => {
+    const category = categorizeEvent(event, categories)
     if (category && stats[category.id]) {
-      const hours = calculateEventDuration(event);
-      stats[category.id].hours += hours;
-      stats[category.id].count += 1;
+      const hours = calculateEventDuration(event)
+      stats[category.id].hours += hours
+      stats[category.id].count += 1
     }
-  });
+  })
 
-  return stats;
+  return stats
 }
 
 /**
@@ -80,24 +80,24 @@ export function calculateCategoryAnalytics(
   totalHours: number
 ): CategoryAnalytics[] {
   return Object.values(categoryStats)
-    .filter(stat => stat.count > 0)
-    .map(stat => ({
+    .filter((stat) => stat.count > 0)
+    .map((stat) => ({
       id: stat.category.id,
       name: stat.category.name,
       color: stat.category.color,
       target: stat.category.target,
       actualPercentage: calculatePercentage(stat.hours, totalHours),
       eventCount: stat.count,
-      hours: stat.hours
+      hours: stat.hours,
     }))
-    .sort((a, b) => b.hours - a.hours);
+    .sort((a, b) => b.hours - a.hours)
 }
 
 /**
  * Get total hours from category stats
  */
 export function getTotalHours(categoryStats: CategoryStats): number {
-  return Object.values(categoryStats).reduce((sum, stat) => sum + stat.hours, 0);
+  return Object.values(categoryStats).reduce((sum, stat) => sum + stat.hours, 0)
 }
 
 /**
@@ -108,17 +108,17 @@ export function filterEventsByDateRange(
   startDate: Date,
   endDate: Date
 ): CalendarEvent[] {
-  return events.filter(event => {
-    const eventDateStr = event.start.dateTime || event.start.date;
-    if (!eventDateStr) return false;
-    
-    const eventDate = new Date(eventDateStr);
-    const eventDateStr2 = eventDate.toISOString().split('T')[0];
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
-    
-    return eventDateStr2 >= startDateStr && eventDateStr2 <= endDateStr;
-  });
+  return events.filter((event) => {
+    const eventDateStr = event.start.dateTime || event.start.date
+    if (!eventDateStr) return false
+
+    const eventDate = new Date(eventDateStr)
+    const eventDateStr2 = eventDate.toISOString().split("T")[0]
+    const startDateStr = startDate.toISOString().split("T")[0]
+    const endDateStr = endDate.toISOString().split("T")[0]
+
+    return eventDateStr2 >= startDateStr && eventDateStr2 <= endDateStr
+  })
 }
 
 /**
@@ -127,30 +127,27 @@ export function filterEventsByDateRange(
 export function calculatePerformanceScore(
   actualPercentage: number,
   targetPercentage: number
-): 'excellent' | 'warning' | 'poor' {
-  const ratio = actualPercentage / targetPercentage;
-  
-  if (ratio >= 0.8) return 'excellent';
-  if (ratio >= 0.5) return 'warning';
-  return 'poor';
+): "excellent" | "warning" | "poor" {
+  const ratio = actualPercentage / targetPercentage
+
+  if (ratio >= 0.8) return "excellent"
+  if (ratio >= 0.5) return "warning"
+  return "poor"
 }
 
 /**
  * Get events for a specific day
  */
-export function getEventsForDay(
-  events: CalendarEvent[],
-  targetDate: Date
-): CalendarEvent[] {
-  const targetDateStr = targetDate.toDateString();
-  
-  return events.filter(event => {
-    const eventDateStr = event.start.dateTime || event.start.date;
-    if (!eventDateStr) return false;
-    
-    const eventDate = new Date(eventDateStr);
-    return eventDate.toDateString() === targetDateStr;
-  });
+export function getEventsForDay(events: CalendarEvent[], targetDate: Date): CalendarEvent[] {
+  const targetDateStr = targetDate.toDateString()
+
+  return events.filter((event) => {
+    const eventDateStr = event.start.dateTime || event.start.date
+    if (!eventDateStr) return false
+
+    const eventDate = new Date(eventDateStr)
+    return eventDate.toDateString() === targetDateStr
+  })
 }
 
 /**
@@ -160,19 +157,19 @@ export function calculateComprehensiveAnalytics(
   events: CalendarEvent[],
   categories: Category[]
 ): {
-  categoryAnalytics: CategoryAnalytics[];
-  totalHours: number;
-  categoryStats: CategoryStats;
+  categoryAnalytics: CategoryAnalytics[]
+  totalHours: number
+  categoryStats: CategoryStats
 } {
-  const categoryStats = calculateCategoryStats(events, categories);
-  const totalHours = getTotalHours(categoryStats);
-  const categoryAnalytics = calculateCategoryAnalytics(categoryStats, totalHours);
+  const categoryStats = calculateCategoryStats(events, categories)
+  const totalHours = getTotalHours(categoryStats)
+  const categoryAnalytics = calculateCategoryAnalytics(categoryStats, totalHours)
 
   return {
     categoryAnalytics,
     totalHours,
-    categoryStats
-  };
+    categoryStats,
+  }
 }
 
 /**
@@ -180,43 +177,43 @@ export function calculateComprehensiveAnalytics(
  */
 export function groupCategoryResults(
   categoryResults: Array<{
-    id: string;
-    name: string;
-    color: string;
-    count: number;
-    hours: number;
-    percentage: number;
+    id: string
+    name: string
+    color: string
+    count: number
+    hours: number
+    percentage: number
   }>,
   maxCategories: number,
   topCategoriesToShow: number
 ): Array<{
-  id: string;
-  name: string;
-  color: string;
-  count: number;
-  hours: number;
-  percentage: number;
+  id: string
+  name: string
+  color: string
+  count: number
+  hours: number
+  percentage: number
 }> {
   if (categoryResults.length <= maxCategories) {
-    return categoryResults;
+    return categoryResults
   }
 
-  const topCategories = categoryResults.slice(0, topCategoriesToShow);
-  const remainder = categoryResults.slice(topCategoriesToShow);
-  
-  const otherHours = remainder.reduce((sum, cat) => sum + cat.hours, 0);
-  const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0);
-  const totalHours = categoryResults.reduce((sum, cat) => sum + cat.hours, 0);
-  const otherPercentage = calculatePercentage(otherHours, totalHours);
-  
+  const topCategories = categoryResults.slice(0, topCategoriesToShow)
+  const remainder = categoryResults.slice(topCategoriesToShow)
+
+  const otherHours = remainder.reduce((sum, cat) => sum + cat.hours, 0)
+  const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0)
+  const totalHours = categoryResults.reduce((sum, cat) => sum + cat.hours, 0)
+  const otherPercentage = calculatePercentage(otherHours, totalHours)
+
   const other = {
-    id: 'other',
-    name: 'Other',
-    color: '#64748b',
+    id: "other",
+    name: "Other",
+    color: "#64748b",
     count: otherCount,
     hours: otherHours,
-    percentage: otherPercentage
-  };
-  
-  return [...topCategories, other];
+    percentage: otherPercentage,
+  }
+
+  return [...topCategories, other]
 }

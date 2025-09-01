@@ -112,76 +112,71 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import type { Category } from "@/stores/categories";
+import { computed } from "vue"
+import { DISPLAY_LIMITS } from "@/constants/display"
+import type { Category } from "@/stores/categories"
 import {
-  getEventsForWeek,
-  getWeekStart,
-  categorizeEvent,
   calculateEventDuration,
   calculatePercentage,
+  categorizeEvent,
   formatDateString,
-} from "@/utils/events";
-import { DISPLAY_LIMITS } from "@/constants/display";
-import WeeklyStatsPanel from "./WeeklyStatsPanel.vue";
+  getEventsForWeek,
+  getWeekStart,
+} from "@/utils/events"
+import WeeklyStatsPanel from "./WeeklyStatsPanel.vue"
 
 interface Props {
-  year: number;
-  month: number;
-  events: any[];
-  categories: Category[];
-  startDate?: Date;
-  endDate?: Date;
+  year: number
+  month: number
+  events: any[]
+  categories: Category[]
+  startDate?: Date
+  endDate?: Date
 }
 
-interface Emits {
-  (e: "dayClick", cell: any): void;
-}
+type Emits = (e: "dayClick", cell: any) => void
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
-const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 const calendarRows = computed(() => {
-  const firstDay = new Date(props.year, props.month, 1);
-  const lastDay = new Date(props.year, props.month + 1, 0);
-  const startDate = new Date(firstDay);
-  startDate.setDate(startDate.getDate() - firstDay.getDay());
+  const firstDay = new Date(props.year, props.month, 1)
+  const lastDay = new Date(props.year, props.month + 1, 0)
+  const startDate = new Date(firstDay)
+  startDate.setDate(startDate.getDate() - firstDay.getDay())
 
-  const allCells = [];
-  const today = new Date();
+  const allCells = []
+  const today = new Date()
 
   // Generate all calendar cells
   for (let i = 0; i < 42; i++) {
-    const cellDate = new Date(startDate);
-    cellDate.setDate(startDate.getDate() + i);
+    const cellDate = new Date(startDate)
+    cellDate.setDate(startDate.getDate() + i)
 
-    const isCurrentMonth = cellDate.getMonth() === props.month;
-    const isToday = cellDate.toDateString() === today.toDateString();
+    const isCurrentMonth = cellDate.getMonth() === props.month
+    const isToday = cellDate.toDateString() === today.toDateString()
 
     // Check if this cell should be visible based on date range
-    let isVisible = isCurrentMonth;
+    let isVisible = isCurrentMonth
     if (props.startDate && props.endDate) {
       // Compare date strings to avoid timezone issues
-      const cellDateStr = formatDateString(cellDate);
-      const startDateStr = formatDateString(props.startDate);
-      const endDateStr = formatDateString(props.endDate);
+      const cellDateStr = formatDateString(cellDate)
+      const startDateStr = formatDateString(props.startDate)
+      const endDateStr = formatDateString(props.endDate)
 
-      isVisible =
-        isCurrentMonth &&
-        cellDateStr >= startDateStr &&
-        cellDateStr <= endDateStr;
+      isVisible = isCurrentMonth && cellDateStr >= startDateStr && cellDateStr <= endDateStr
     }
 
     // Get events for this day
     const dayEvents = props.events.filter((event) => {
-      const eventDate = new Date(event.start.dateTime || event.start.date);
-      return eventDate.toDateString() === cellDate.toDateString();
-    });
+      const eventDate = new Date(event.start.dateTime || event.start.date)
+      return eventDate.toDateString() === cellDate.toDateString()
+    })
 
     // Calculate category percentages
-    const categoryPercentages = calculateCategoryPercentages(dayEvents);
+    const categoryPercentages = calculateCategoryPercentages(dayEvents)
 
     allCells.push({
       date: cellDate.getDate(),
@@ -190,81 +185,81 @@ const calendarRows = computed(() => {
       isToday,
       dayEvents,
       categoryPercentages,
-    });
+    })
   }
 
   // Group cells into rows of 7 and filter out rows with no visible cells
-  const rows = [];
+  const rows = []
   for (let i = 0; i < 6; i++) {
-    const row = allCells.slice(i * 7, (i + 1) * 7);
-    const hasVisibleCells = row.some((cell) => cell.isVisible);
+    const row = allCells.slice(i * 7, (i + 1) * 7)
+    const hasVisibleCells = row.some((cell) => cell.isVisible)
 
     if (hasVisibleCells) {
-      rows.push(row);
+      rows.push(row)
     }
   }
 
-  return rows;
-});
+  return rows
+})
 
 const weeklyStatsData = computed(() => {
-  const rows = calendarRows.value;
-  const weeklyStats = [];
+  const rows = calendarRows.value
+  const weeklyStats = []
 
   for (const row of rows) {
     // Get the first day of this row (Sunday)
-    const firstCell = row[0];
+    const firstCell = row[0]
     if (firstCell) {
       // Calculate the actual date for the first cell
-      const firstDay = new Date(props.year, props.month, 1);
-      const startOfMonth = new Date(firstDay);
-      startOfMonth.setDate(startOfMonth.getDate() - firstDay.getDay());
+      const firstDay = new Date(props.year, props.month, 1)
+      const startOfMonth = new Date(firstDay)
+      startOfMonth.setDate(startOfMonth.getDate() - firstDay.getDay())
 
       // Calculate week start based on row position
-      const rowIndex = rows.indexOf(row);
-      const weekStart = new Date(startOfMonth);
-      weekStart.setDate(startOfMonth.getDate() + rowIndex * 7);
+      const rowIndex = rows.indexOf(row)
+      const weekStart = new Date(startOfMonth)
+      weekStart.setDate(startOfMonth.getDate() + rowIndex * 7)
 
       // Get all events for this week using the utility function
-      const weekEvents = getEventsForWeek(props.events, weekStart);
+      const weekEvents = getEventsForWeek(props.events, weekStart)
 
       weeklyStats.push({
         weekStart,
         weekEvents,
-      });
+      })
     }
   }
 
-  return weeklyStats;
-});
+  return weeklyStats
+})
 
 function calculateCategoryPercentages(events: any[]) {
-  if (events.length === 0) return [];
+  if (events.length === 0) return []
 
-  const categoryStats: { [key: string]: { hours: number; count: number } } = {};
-  let totalHours = 0;
+  const categoryStats: { [key: string]: { hours: number; count: number } } = {}
+  let totalHours = 0
 
   // Calculate hours by category
   events.forEach((event) => {
-    const category = categorizeEvent(event, props.categories);
-    if (!category) return;
+    const category = categorizeEvent(event, props.categories)
+    if (!category) return
 
-    const hours = calculateEventDuration(event);
+    const hours = calculateEventDuration(event)
 
     if (!categoryStats[category.id]) {
-      categoryStats[category.id] = { hours: 0, count: 0 };
+      categoryStats[category.id] = { hours: 0, count: 0 }
     }
 
-    categoryStats[category.id].hours += hours;
-    categoryStats[category.id].count += 1;
-    totalHours += hours;
-  });
+    categoryStats[category.id].hours += hours
+    categoryStats[category.id].count += 1
+    totalHours += hours
+  })
 
   // Convert to array with category info
   const categoryResults = Object.entries(categoryStats)
     .map(([categoryId, stats]) => {
-      const category = props.categories.find((cat) => cat.id === categoryId);
-      const percentage = calculatePercentage(stats.hours, totalHours);
+      const category = props.categories.find((cat) => cat.id === categoryId)
+      const percentage = calculatePercentage(stats.hours, totalHours)
 
       return {
         id: categoryId,
@@ -273,23 +268,18 @@ function calculateCategoryPercentages(events: any[]) {
         count: stats.count,
         hours: stats.hours,
         percentage,
-      };
+      }
     })
-    .sort((a, b) => b.hours - a.hours);
+    .sort((a, b) => b.hours - a.hours)
 
   // If more than max categories, combine smaller ones into "Other"
   if (categoryResults.length > DISPLAY_LIMITS.MAX_CATEGORIES_PER_DAY) {
-    const topCategories = categoryResults.slice(
-      0,
-      DISPLAY_LIMITS.TOP_CATEGORIES_TO_SHOW
-    );
-    const remainder = categoryResults.slice(
-      DISPLAY_LIMITS.TOP_CATEGORIES_TO_SHOW
-    );
+    const topCategories = categoryResults.slice(0, DISPLAY_LIMITS.TOP_CATEGORIES_TO_SHOW)
+    const remainder = categoryResults.slice(DISPLAY_LIMITS.TOP_CATEGORIES_TO_SHOW)
 
-    const otherHours = remainder.reduce((sum, cat) => sum + cat.hours, 0);
-    const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0);
-    const otherPercentage = calculatePercentage(otherHours, totalHours);
+    const otherHours = remainder.reduce((sum, cat) => sum + cat.hours, 0)
+    const otherCount = remainder.reduce((sum, cat) => sum + cat.count, 0)
+    const otherPercentage = calculatePercentage(otherHours, totalHours)
 
     const other = {
       id: "other",
@@ -298,11 +288,11 @@ function calculateCategoryPercentages(events: any[]) {
       count: otherCount,
       hours: otherHours,
       percentage: otherPercentage,
-    };
+    }
 
-    return [...topCategories, other];
+    return [...topCategories, other]
   }
 
-  return categoryResults;
+  return categoryResults
 }
 </script>

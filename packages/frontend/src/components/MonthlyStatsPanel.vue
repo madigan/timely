@@ -112,25 +112,25 @@
 </template>
 
 <script setup lang="ts">
-import { PERFORMANCE_THRESHOLDS } from "@/constants/display";
+import { PERFORMANCE_THRESHOLDS } from "@/constants/display"
 
 interface CategoryAnalytics {
-  id: string;
-  name: string;
-  color: string;
-  target: number;
-  actualPercentage: number;
-  eventCount: number;
-  hours: number;
+  id: string
+  name: string
+  color: string
+  target: number
+  actualPercentage: number
+  eventCount: number
+  hours: number
 }
 
 interface Props {
-  categoryAnalytics: CategoryAnalytics[];
+  categoryAnalytics: CategoryAnalytics[]
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
 defineEmits<{
-  'open-settings': [];
-}>();
+  "open-settings": []
+}>()
 </script>

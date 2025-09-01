@@ -1,4 +1,4 @@
-import { TransactionSQL } from "bun";
+import type { TransactionSQL } from "bun"
 
 /**
  * Initial database creation with migration status tracking.
@@ -16,8 +16,8 @@ export async function up(tx: TransactionSQL) {
     picture TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )`;
-  
+  )`
+
   // Create sessions table
   await tx`
         CREATE TABLE sessions (
@@ -25,7 +25,7 @@ export async function up(tx: TransactionSQL) {
         user_id TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days')
-        )`;
+        )`
 
   // Create categories table
   await tx`
@@ -38,18 +38,18 @@ export async function up(tx: TransactionSQL) {
       target INTEGER NOT NULL CHECK (target >= 0 AND target <= 100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
+    )`
 
   // Create indexes for better performance
   await tx`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)
-`;
+`
 
   await tx`
     CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at)
-`;
+`
 
   await tx`
     CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id)
-`;
+`
 }

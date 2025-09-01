@@ -1,12 +1,12 @@
-import './assets/main.css'
+import "./assets/main.css"
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import { createPinia } from "pinia"
+import { createApp } from "vue"
 
-import App from './App.vue'
-import router from './router'
-import { useAuthStore } from './stores/auth'
-import { useToastStore } from './stores/toast'
+import App from "./App.vue"
+import router from "./router"
+import { useAuthStore } from "./stores/auth"
+import { useToastStore } from "./stores/toast"
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -21,4 +21,4 @@ const toastStore = useToastStore()
 // Initialize authentication state
 authStore.initializeAuth()
 
-app.mount('#app')
+app.mount("#app")

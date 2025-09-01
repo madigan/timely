@@ -10,19 +10,14 @@
  */
 export function isImportantEvent(event: any, keywords: string[]): boolean {
   if (!event || !keywords || keywords.length === 0) {
-    return false;
+    return false
   }
 
   // Combine event title and description for keyword matching
-  const eventText = (
-    (event.summary || '') + ' ' + 
-    (event.description || '')
-  ).toLowerCase();
+  const eventText = ((event.summary || "") + " " + (event.description || "")).toLowerCase()
 
   // Check if any important keyword is found in the event text
-  return keywords.some(keyword => 
-    eventText.includes(keyword.toLowerCase())
-  );
+  return keywords.some((keyword) => eventText.includes(keyword.toLowerCase()))
 }
 
 /**
@@ -32,24 +27,18 @@ export function isImportantEvent(event: any, keywords: string[]): boolean {
  * @param limit - Maximum number of important events to return (optional)
  * @returns Array of important events, limited by the limit parameter
  */
-export function filterImportantEvents(
-  events: any[], 
-  keywords: string[], 
-  limit?: number
-): any[] {
-  const importantEvents = events.filter(event => 
-    isImportantEvent(event, keywords)
-  );
+export function filterImportantEvents(events: any[], keywords: string[], limit?: number): any[] {
+  const importantEvents = events.filter((event) => isImportantEvent(event, keywords))
 
   // Sort by start date (earliest first)
   importantEvents.sort((a, b) => {
-    const dateA = new Date(a.start?.dateTime || a.start?.date || 0);
-    const dateB = new Date(b.start?.dateTime || b.start?.date || 0);
-    return dateA.getTime() - dateB.getTime();
-  });
+    const dateA = new Date(a.start?.dateTime || a.start?.date || 0)
+    const dateB = new Date(b.start?.dateTime || b.start?.date || 0)
+    return dateA.getTime() - dateB.getTime()
+  })
 
   // Apply limit if specified
-  return limit ? importantEvents.slice(0, limit) : importantEvents;
+  return limit ? importantEvents.slice(0, limit) : importantEvents
 }
 
 /**
@@ -58,23 +47,23 @@ export function filterImportantEvents(
  * @returns Formatted date and time string
  */
 export function formatEventDateTime(event: any): string {
-  const eventDate = new Date(event.start?.dateTime || event.start?.date);
-  
+  const eventDate = new Date(event.start?.dateTime || event.start?.date)
+
   // If it's an all-day event (only date, no time)
   if (event.start?.date && !event.start?.dateTime) {
-    return eventDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return eventDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })
   }
-  
+
   // Event with specific time
-  return eventDate.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  });
+  return eventDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })
 }
 
 /**
@@ -84,8 +73,8 @@ export function formatEventDateTime(event: any): string {
  * @returns Shortened title with ellipsis if needed
  */
 export function shortenEventTitle(title: string, maxLength: number = 40): string {
-  if (!title) return '';
-  return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
+  if (!title) return ""
+  return title.length > maxLength ? title.substring(0, maxLength) + "..." : title
 }
 
 /**
@@ -95,17 +84,17 @@ export function shortenEventTitle(title: string, maxLength: number = 40): string
  * @returns Array of events that occur within the specified week
  */
 export function getEventsForWeek(events: any[], weekStart: Date): any[] {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6); // Saturday
-  
-  return events.filter(event => {
-    const eventDate = new Date(event.start?.dateTime || event.start?.date);
-    const eventDateStr = eventDate.toISOString().split('T')[0];
-    const weekStartStr = weekStart.toISOString().split('T')[0];
-    const weekEndStr = weekEnd.toISOString().split('T')[0];
-    
-    return eventDateStr >= weekStartStr && eventDateStr <= weekEndStr;
-  });
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6) // Saturday
+
+  return events.filter((event) => {
+    const eventDate = new Date(event.start?.dateTime || event.start?.date)
+    const eventDateStr = eventDate.toISOString().split("T")[0]
+    const weekStartStr = weekStart.toISOString().split("T")[0]
+    const weekEndStr = weekEnd.toISOString().split("T")[0]
+
+    return eventDateStr >= weekStartStr && eventDateStr <= weekEndStr
+  })
 }
 
 /**
@@ -114,9 +103,9 @@ export function getEventsForWeek(events: any[], weekStart: Date): any[] {
  * @returns Date object representing the Sunday of that week
  */
 export function getWeekStart(date: Date): Date {
-  const weekStart = new Date(date);
-  weekStart.setDate(date.getDate() - date.getDay());
-  return weekStart;
+  const weekStart = new Date(date)
+  weekStart.setDate(date.getDate() - date.getDay())
+  return weekStart
 }
 
 /**
@@ -126,16 +115,16 @@ export function getWeekStart(date: Date): Date {
  * @returns Array of Date objects representing week starts (Sundays)
  */
 export function getWeekStartsInRange(startDate: Date, endDate: Date): Date[] {
-  const weekStarts: Date[] = [];
-  const firstWeekStart = getWeekStart(startDate);
-  const current = new Date(firstWeekStart);
-  
+  const weekStarts: Date[] = []
+  const firstWeekStart = getWeekStart(startDate)
+  const current = new Date(firstWeekStart)
+
   while (current <= endDate) {
-    weekStarts.push(new Date(current));
-    current.setDate(current.getDate() + 7);
+    weekStarts.push(new Date(current))
+    current.setDate(current.getDate() + 7)
   }
-  
-  return weekStarts;
+
+  return weekStarts
 }
 
 /**
@@ -145,21 +134,16 @@ export function getWeekStartsInRange(startDate: Date, endDate: Date): Date[] {
  * @returns The matching category or null if no match found
  */
 export function categorizeEvent(event: any, categories: any[]): any | null {
-  const eventText = (
-    (event.summary || '') + ' ' + 
-    (event.description || '')
-  ).toLowerCase();
-  
+  const eventText = ((event.summary || "") + " " + (event.description || "")).toLowerCase()
+
   // Find the first category whose keywords match the event
   for (const category of categories) {
-    if (category.keywords.some((keyword: string) => 
-      eventText.includes(keyword.toLowerCase())
-    )) {
-      return category;
+    if (category.keywords.some((keyword: string) => eventText.includes(keyword.toLowerCase()))) {
+      return category
     }
   }
-  
-  return null;
+
+  return null
 }
 
 /**
@@ -168,9 +152,9 @@ export function categorizeEvent(event: any, categories: any[]): any | null {
  * @returns Duration in hours as a number
  */
 export function calculateEventDuration(event: any): number {
-  const startTime = new Date(event.start.dateTime || event.start.date);
-  const endTime = new Date(event.end.dateTime || event.end.date);
-  return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+  const startTime = new Date(event.start.dateTime || event.start.date)
+  const endTime = new Date(event.end.dateTime || event.end.date)
+  return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
 }
 
 /**
@@ -180,7 +164,7 @@ export function calculateEventDuration(event: any): number {
  * @returns Rounded percentage as integer
  */
 export function calculatePercentage(value: number, total: number): number {
-  return total > 0 ? Math.round((value / total) * 100) : 0;
+  return total > 0 ? Math.round((value / total) * 100) : 0
 }
 
 /**
@@ -189,5 +173,5 @@ export function calculatePercentage(value: number, total: number): number {
  * @returns Date string in YYYY-MM-DD format
  */
 export function formatDateString(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split("T")[0]
 }

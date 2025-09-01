@@ -1,10 +1,10 @@
-import { Elysia } from "elysia"
-import { staticPlugin } from "@elysiajs/static"
 import { cors } from "@elysiajs/cors"
+import { staticPlugin } from "@elysiajs/static"
+import { die } from "@timely/shared"
+import { Elysia } from "elysia"
 import { authRoutes } from "./routes/auth.routes.ts"
 import { calendarRoutes } from "./routes/calendar.routes.ts"
 import { categoryRoutes } from "./routes/categories.routes.ts"
-import { die } from "@timely/shared"
 
 const PORT = process.env.PORT || 3000
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || die("ENCRYPTION_KEY must be defined.")

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from "vue-router";
-import Header from "./components/Header.vue";
-import Footer from "./components/Footer.vue";
-import { useToastStore } from './stores/toast';
+import { RouterLink, RouterView } from "vue-router"
+import Footer from "./components/Footer.vue"
+import Header from "./components/Header.vue"
+import { useToastStore } from "./stores/toast"
 
-const toastStore = useToastStore();
+const toastStore = useToastStore()
 </script>
 
 <template>
