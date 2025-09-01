@@ -1,6 +1,7 @@
 import { sql } from "../db/database.service.ts"
 import { decryptToken, encryptToken } from "./oauth.ts"
 import { createDefaultImportantEventSettings } from "../importantEvents/importantEvents.service.ts"
+import { initializeUserCategories } from "../categories/categories.service.ts"
 
 export interface UserTokens {
   userId: string
@@ -48,13 +49,21 @@ export async function storeUserTokens(tokens: UserTokens): Promise<void> {
         updated_at = CURRENT_TIMESTAMP
     `
 
-    // Create default important event settings for new users
+    // Create default settings and data for new users
     if (isNewUser) {
       try {
         await createDefaultImportantEventSettings(tokens.userId)
         console.log(`✅ Created default important event settings for new user: ${tokens.email}`)
       } catch (error) {
         console.error("Failed to create default important event settings:", error)
+        // Don't throw - user creation should not fail due to this
+      }
+
+      try {
+        await initializeUserCategories(tokens.userId)
+        console.log(`✅ Created default categories for new user: ${tokens.email}`)
+      } catch (error) {
+        console.error("Failed to create default categories:", error)
         // Don't throw - user creation should not fail due to this
       }
     }
