@@ -42,8 +42,8 @@ const server = new Elysia({
     return { error: "Internal server error" }
   })
   .use(apis)
-  // .get("/settings", file("../frontend/dist/index.html"))
-  // .get("/calendar", file("../frontend/dist/index.html"))
+  .get("/settings", () => file("../frontend/dist/index.html"))
+  .get("/calendar", () => file("../frontend/dist/index.html"))
   .use(
     staticPlugin({
       assets: "../frontend/dist",
