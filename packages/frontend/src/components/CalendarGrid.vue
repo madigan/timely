@@ -289,18 +289,23 @@ const isInitialLoading = computed(() =>
 const isEventsLoading = computed(() => calendarStore.isLoading)
 const isCategoriesLoading = computed(() => categoryStore.loading)
 
-// Watch for authentication state to trigger loading
-watch(() => authStore.isLoggedIn(), async (isLoggedIn) => {
-  if (isLoggedIn && categoryStore.categories.length === 0) {
-    console.log("User authenticated, loading categories...")
-    await categoryStore.fetchCategories()
-  }
-}, { immediate: true })
-
 onMounted(async () => {
   console.log("CalendarGrid mounting - starting data load...")
+  
+  // Wait for auth to be fully initialized first
+  while (authStore.isLoading) {
+    console.log("Waiting for auth to complete...")
+    await new Promise(resolve => setTimeout(resolve, 50))
+  }
+  
   console.log("Auth state:", { isLoggedIn: authStore.isLoggedIn(), user: authStore.user })
   console.log("Category state:", { count: categoryStore.categories.length, loading: categoryStore.loading })
+  
+  if (!authStore.isLoggedIn()) {
+    console.log("User not authenticated, skipping data load")
+    isInitiallyLoading.value = false
+    return
+  }
   
   try {
     // Load all necessary data after authentication
@@ -314,10 +319,7 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error loading initial data:", error)
   } finally {
-    // Ensure skeleton shows for at least a brief moment
-    setTimeout(() => {
-      isInitiallyLoading.value = false
-    }, 500)
+    isInitiallyLoading.value = false
   }
 })
 
@@ -355,24 +357,6 @@ function formatDateForInput(date: Date): string {
   return date.toISOString().split("T")[0]
 }
 
-function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-
-  const startStr = start.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })
-
-  const endStr = end.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })
-
-  return `${startStr} - ${endStr}`
-}
 
 function showDayDetails(dayCell: any) {
   selectedDay.value = dayCell

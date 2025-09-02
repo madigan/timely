@@ -39,7 +39,7 @@ export interface Category {
   target: number
 }
 
-export const useCategoryStore = defineStore("settings", () => {
+export const useCategoryStore = defineStore("categories", () => {
   const categories = ref<Category[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -64,8 +64,12 @@ export const useCategoryStore = defineStore("settings", () => {
       }
 
       const data = await response.json()
+      console.log("📋 Raw API response:", data)
+      console.log("📋 data.categories type:", typeof data.categories)
+      console.log("📋 data.categories value:", data.categories)
       categories.value = data.categories
-      console.log(`✅ Loaded ${categories.value.length} categories`)
+      console.log(`✅ Loaded ${categories.value?.length || 0} categories`)
+      console.log("📋 Categories value after assignment:", categories.value)
     } catch (err) {
       const toastStore = useToastStore()
       console.error("Error fetching categories:", err)
