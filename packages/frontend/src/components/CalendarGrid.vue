@@ -63,7 +63,6 @@
                 :month-key="`${month.year}-${month.month}`"
                 :is-loading="isEventsLoading"
                 @event-expanded="onEventExpanded"
-                @open-settings="openImportantEventsSettings"
                 class="h-full"
               />
             </div>
@@ -73,11 +72,10 @@
           <div class="flex-1">
             <MonthlyStatsPanel
               v-if="
-                categories.length > 0 || isEventsLoading || isCategoriesLoading
+                categoryStore.categories.length > 0 || isEventsLoading || isCategoriesLoading
               "
               :category-analytics="month.categoryAnalytics"
               :is-loading="isEventsLoading || isCategoriesLoading"
-              @open-settings="openCategorySettings"
             />
             <div
               v-else
@@ -94,7 +92,7 @@
           :year="month.year"
           :month="month.month"
           :events="month.events"
-          :categories="categories"
+          :categories="categoryStore.categories"
           :startDate="new Date(fromDate)"
           :endDate="new Date(toDate)"
           :is-loading="isEventsLoading || isCategoriesLoading"
@@ -108,7 +106,7 @@
       <h3 class="text-lg font-semibold mb-4">Category Legend</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
-          v-for="category in categories"
+          v-for="category in categoryStore.categories"
           :key="category.id"
           class="flex items-center space-x-2"
         >
@@ -176,79 +174,6 @@
       </form>
     </dialog>
 
-    <!-- Important Events Settings Modal -->
-    <dialog class="modal" :class="{ 'modal-open': showImportantEventsModal }">
-      <div class="modal-box max-w-2xl">
-        <h3 class="font-bold text-lg mb-4">Important Events Settings</h3>
-        <ImportantEventsSettings />
-        <div class="modal-action">
-          <button class="btn" @click="closeImportantEventsModal">Close</button>
-        </div>
-      </div>
-      <form
-        method="dialog"
-        class="modal-backdrop"
-        @click="closeImportantEventsModal"
-      >
-        <button>close</button>
-      </form>
-    </dialog>
-
-    <!-- Category Settings Modal -->
-    <dialog class="modal" :class="{ 'modal-open': showCategorySettingsModal }">
-      <div class="modal-box max-w-4xl">
-        <h3 class="font-bold text-lg mb-4">Category Settings</h3>
-        <CategorySettings
-          :categories="categories"
-          @add-category="showAddCategoryModal = true"
-          @edit-category="editCategory"
-          @delete-category="confirmDeleteCategory"
-        />
-        <div class="modal-action">
-          <button class="btn" @click="closeCategorySettingsModal">Close</button>
-        </div>
-      </div>
-      <form
-        method="dialog"
-        class="modal-backdrop"
-        @click="closeCategorySettingsModal"
-      >
-        <button>close</button>
-      </form>
-    </dialog>
-
-    <!-- Add/Edit Category Modal -->
-    <CategoryModal
-      :is-open="showAddCategoryModal || showEditCategoryModal"
-      :editing-category="editingCategory"
-      @close="closeCategoryModal"
-      @save="saveCategory"
-    />
-
-    <!-- Delete Category Confirmation Modal -->
-    <dialog class="modal" :class="{ 'modal-open': showDeleteCategoryModal }">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">Confirm Deletion</h3>
-        <p class="py-4">
-          Are you sure you want to delete the category "{{
-            categoryToDelete?.name
-          }}"? This action cannot be undone.
-        </p>
-        <div class="modal-action">
-          <button class="btn" @click="showDeleteCategoryModal = false">
-            Cancel
-          </button>
-          <button class="btn btn-error" @click="deleteCategory">Delete</button>
-        </div>
-      </div>
-      <form
-        method="dialog"
-        class="modal-backdrop"
-        @click="showDeleteCategoryModal = false"
-      >
-        <button>close</button>
-      </form>
-    </dialog>
     </div>
   </div>
 </template>
@@ -262,10 +187,7 @@ import { useAuthStore } from "@/stores/auth"
 import { useToastStore } from "@/stores/toast"
 import { filterImportantEvents } from "@/utils/events"
 import CalendarMonth from "./CalendarMonth.vue"
-import CategoryModal, { type CategoryFormData } from "./CategoryModal.vue"
-import CategorySettings from "./CategorySettings.vue"
 import ImportantEventsPanel from "./ImportantEventsPanel.vue"
-import ImportantEventsSettings from "./ImportantEventsSettings.vue"
 import MonthlyStatsPanel from "./MonthlyStatsPanel.vue"
 import CalendarGridSkeleton from "./skeletons/CalendarGridSkeleton.vue"
 
@@ -276,13 +198,6 @@ const authStore = useAuthStore()
 const toastStore = useToastStore()
 
 const showModal = ref(false)
-const showImportantEventsModal = ref(false)
-const showCategorySettingsModal = ref(false)
-const showAddCategoryModal = ref(false)
-const showEditCategoryModal = ref(false)
-const showDeleteCategoryModal = ref(false)
-const editingCategory = ref<Category | null>(null)
-const categoryToDelete = ref<Category | null>(null)
 const selectedDay = ref<any>(null)
 const allEvents = ref<any[]>([])
 
@@ -360,7 +275,8 @@ const monthsInRange = computed(() => {
   return months
 })
 
-const { categories } = categoryStore
+// Use reactive reference directly - don't destructure to maintain reactivity
+// const { categories } = categoryStore // This breaks reactivity!
 const { settings: importantSettings } = importantEventsStore
 
 // Local loading state to ensure skeleton shows during initial load
@@ -375,7 +291,7 @@ const isCategoriesLoading = computed(() => categoryStore.loading)
 
 // Watch for authentication state to trigger loading
 watch(() => authStore.isLoggedIn(), async (isLoggedIn) => {
-  if (isLoggedIn && categories.length === 0) {
+  if (isLoggedIn && categoryStore.categories.length === 0) {
     console.log("User authenticated, loading categories...")
     await categoryStore.fetchCategories()
   }
@@ -384,7 +300,7 @@ watch(() => authStore.isLoggedIn(), async (isLoggedIn) => {
 onMounted(async () => {
   console.log("CalendarGrid mounting - starting data load...")
   console.log("Auth state:", { isLoggedIn: authStore.isLoggedIn(), user: authStore.user })
-  console.log("Category state:", { count: categories.length, loading: categoryStore.loading })
+  console.log("Category state:", { count: categoryStore.categories.length, loading: categoryStore.loading })
   
   try {
     // Load all necessary data after authentication
@@ -394,7 +310,7 @@ onMounted(async () => {
       loadEvents()
     ])
     console.log("CalendarGrid data loaded successfully")
-    console.log("Final category count:", categories.length)
+    console.log("Final category count:", categoryStore.categories.length)
   } catch (error) {
     console.error("Error loading initial data:", error)
   } finally {
@@ -426,7 +342,7 @@ watch([fromDate, toDate], async () => {
   } catch (error) {
     console.error("Error reloading events after date change:", error)
   }
-}, { debounce: 500 })
+})
 
 
 function resetToDefault() {
@@ -468,64 +384,6 @@ function closeModal() {
   selectedDay.value = null
 }
 
-function openImportantEventsSettings() {
-  showImportantEventsModal.value = true
-}
-
-function closeImportantEventsModal() {
-  showImportantEventsModal.value = false
-}
-
-function openCategorySettings() {
-  showCategorySettingsModal.value = true
-}
-
-function closeCategorySettingsModal() {
-  showCategorySettingsModal.value = false
-}
-
-function editCategory(category: Category) {
-  editingCategory.value = category
-  showEditCategoryModal.value = true
-}
-
-function confirmDeleteCategory(category: Category) {
-  categoryToDelete.value = category
-  showDeleteCategoryModal.value = true
-}
-
-async function deleteCategory() {
-  if (categoryToDelete.value) {
-    try {
-      await categoryStore.deleteCategory(categoryToDelete.value.id)
-      showDeleteCategoryModal.value = false
-      categoryToDelete.value = null
-    } catch (error) {
-      console.error("Failed to delete category:", error)
-      // Error toast is already shown by the store, just keep modal open
-    }
-  }
-}
-
-async function saveCategory(data: CategoryFormData) {
-  try {
-    if (editingCategory.value) {
-      await categoryStore.updateCategory(editingCategory.value.id, data)
-    } else {
-      await categoryStore.addCategory(data)
-    }
-    closeCategoryModal()
-  } catch (error) {
-    console.error("Failed to save category:", error)
-    // Error toast is already shown by the store, just keep modal open
-  }
-}
-
-function closeCategoryModal() {
-  showAddCategoryModal.value = false
-  showEditCategoryModal.value = false
-  editingCategory.value = null
-}
 
 function formatSelectedDate(dayCell: any) {
   // Find the month that contains this day cell
@@ -556,7 +414,7 @@ function formatSelectedDate(dayCell: any) {
   })
 }
 
-function onEventExpanded(eventId: string, monthKey: string) {
+function onEventExpanded(_eventId: string, _monthKey: string) {
   // Optional: Handle event expansion if needed for analytics or other purposes
   // Currently not needed as the accordion component manages its own state
 }
@@ -569,7 +427,7 @@ function calculateMonthCategoryAnalytics(monthEvents: any[]) {
   } = {}
 
   // Initialize category stats
-  categories.forEach((category) => {
+  categoryStore.categories.forEach((category) => {
     categoryStats[category.id] = {
       hours: 0,
       count: 0,
@@ -594,7 +452,7 @@ function calculateMonthCategoryAnalytics(monthEvents: any[]) {
   })
 
   // Calculate analytics data - show all categories to provide complete overview
-  return categories
+  return categoryStore.categories
     .map((category) => {
       const stats = categoryStats[category.id]
       const actualPercentage = totalHours > 0 ? (stats.hours / totalHours) * 100 : 0
@@ -616,7 +474,7 @@ function categorizeEvent(event: any): Category | null {
   const eventText = ((event.summary || "") + " " + (event.description || "")).toLowerCase()
 
   // Find the first category whose keywords match the event
-  for (const category of categories) {
+  for (const category of categoryStore.categories) {
     if (category.keywords.some((keyword) => eventText.includes(keyword.toLowerCase()))) {
       return category
     }

@@ -6,7 +6,6 @@
       "packages/**/*.tsx",
       "packages/**/*.js",
       "packages/**/*.jsx",
-      "packages/**/*.vue",
       "packages/**/*.json",
       "packages/**/*.css",
       "packages/**/*.html"

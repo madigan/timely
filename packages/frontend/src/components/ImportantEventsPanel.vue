@@ -12,7 +12,7 @@
         </div>
         <button 
           class="btn btn-ghost btn-xs text-info hover:bg-info/20 print:hidden"
-          @click="$emit('open-settings')"
+          @click="showSettingsModal = true"
           title="Settings"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,6 +85,24 @@
       </div>
     </TransitionGroup>
     </div>
+    
+    <!-- Important Events Settings Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showSettingsModal }">
+      <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">Important Events Settings</h3>
+        <ImportantEventsSettings />
+        <div class="modal-action">
+          <button class="btn" @click="closeSettingsModal">Close</button>
+        </div>
+      </div>
+      <form
+        method="dialog"
+        class="modal-backdrop"
+        @click="closeSettingsModal"
+      >
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
@@ -92,6 +110,7 @@
 import { ref } from "vue"
 import { formatEventDateTime, shortenEventTitle } from "@/utils/events"
 import ImportantEventsSkeleton from "./skeletons/ImportantEventsSkeleton.vue"
+import ImportantEventsSettings from "./ImportantEventsSettings.vue"
 
 interface Props {
   events: any[]
@@ -101,7 +120,6 @@ interface Props {
 
 interface Emits {
   (e: "eventExpanded", eventId: string, monthKey: string): void
-  (e: "open-settings"): void
 }
 
 const props = defineProps<Props>()
@@ -109,6 +127,8 @@ const emit = defineEmits<Emits>()
 
 // Local state for expanded events (per accordion instance)
 const expandedEvent = ref<string | null>(null)
+// Settings modal state
+const showSettingsModal = ref(false)
 
 function toggleEventExpansion(eventId: string) {
   if (expandedEvent.value === eventId) {
@@ -125,5 +145,9 @@ function toggleEventExpansion(eventId: string) {
 
 function isEventExpanded(eventId: string): boolean {
   return expandedEvent.value === eventId
+}
+
+function closeSettingsModal() {
+  showSettingsModal.value = false
 }
 </script>

@@ -15,7 +15,7 @@
         <div class="flex items-center gap-1">
           <button 
             class="btn btn-ghost btn-xs hover:bg-base-300 print:hidden"
-            @click="$emit('open-settings')"
+            @click="showCategorySettingsModal = true"
             title="Category Settings"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -55,71 +55,129 @@
           </div>
         </div>
       </h3>
-      <div v-if="categoryAnalytics.length === 0 && !isLoading" class="flex items-center justify-center h-20 text-sm text-base-content/50">
+      <div v-if="categoryAnalytics.length === 0" class="flex items-center justify-center h-20 text-sm text-base-content/50">
         No categories configured yet.
       </div>
     
-    <div v-else class="space-y-2 flex-1">
-      <div 
-        v-for="categoryData in categoryAnalytics" 
-        :key="categoryData.id"
-        class="flex items-center space-x-2 text-xs"
-      >
-        <!-- Category Label -->
-        <div class="flex items-center space-x-1 min-w-fit">
-          <div
-            class="w-2 h-2 rounded-full"
-            :style="{ backgroundColor: categoryData.color }"
-          ></div>
-          <span class="font-medium truncate w-20">{{ categoryData.name }}</span>
-        </div>
-        
-        <!-- Progress Bar -->
-        <div class="flex-1 relative">
-          <!-- Target background -->
-          <div class="h-1 bg-base-content/20 rounded-full"></div>
-          <!-- Target marker -->
-          <div 
-            class="absolute -top-0.5 h-2 w-0.5 bg-base-content/80 rounded-full z-10"
-            :style="{ left: Math.min(categoryData.target, 100) + '%' }"
-            :title="`Target: ${categoryData.target}%`"
-          ></div>
-          <!-- Actual progress -->
-          <div
-            class="absolute top-0 h-1 rounded-full transition-all duration-300"
-            :style="{ 
-              width: Math.min(categoryData.actualPercentage, 100) + '%',
-              backgroundColor: categoryData.color 
-            }"
-            :title="`Actual: ${categoryData.actualPercentage.toFixed(1)}%`"
-          ></div>
-        </div>
-        
-        <!-- Performance Stats -->
-        <div class="flex items-center space-x-1 min-w-fit">
-          <span class="font-medium">{{ Math.round(categoryData.actualPercentage) }}/{{ categoryData.target }}%</span>
-          <span 
-            class="text-xs px-1 py-0.5 rounded text-white w-5 text-center"
-            :class="{
-              'bg-success': categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.EXCELLENT,
-              'bg-warning': categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.WARNING && categoryData.actualPercentage < categoryData.target * PERFORMANCE_THRESHOLDS.EXCELLENT,
-              'bg-error': categoryData.actualPercentage < categoryData.target * PERFORMANCE_THRESHOLDS.WARNING
-            }"
-            :title="`${categoryData.eventCount} event${categoryData.eventCount !== 1 ? 's' : ''}`"
-          >
-            {{ categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.EXCELLENT ? '✓' : 
-               categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.WARNING ? '!' : '✗' }}
-          </span>
+      <div v-else class="space-y-2 flex-1">
+        <div 
+          v-for="categoryData in categoryAnalytics" 
+          :key="categoryData.id"
+          class="flex items-center space-x-2 text-xs"
+        >
+          <!-- Category Label -->
+          <div class="flex items-center space-x-1 min-w-fit">
+            <div
+              class="w-2 h-2 rounded-full"
+              :style="{ backgroundColor: categoryData.color }"
+            ></div>
+            <span class="font-medium truncate w-20">{{ categoryData.name }}</span>
+          </div>
+          
+          <!-- Progress Bar -->
+          <div class="flex-1 relative">
+            <!-- Target background -->
+            <div class="h-1 bg-base-content/20 rounded-full"></div>
+            <!-- Target marker -->
+            <div 
+              class="absolute -top-0.5 h-2 w-0.5 bg-base-content/80 rounded-full z-10"
+              :style="{ left: Math.min(categoryData.target, 100) + '%' }"
+              :title="`Target: ${categoryData.target}%`"
+            ></div>
+            <!-- Actual progress -->
+            <div
+              class="absolute top-0 h-1 rounded-full transition-all duration-300"
+              :style="{ 
+                width: Math.min(categoryData.actualPercentage, 100) + '%',
+                backgroundColor: categoryData.color 
+              }"
+              :title="`Actual: ${categoryData.actualPercentage.toFixed(1)}%`"
+            ></div>
+          </div>
+          
+          <!-- Performance Stats -->
+          <div class="flex items-center space-x-1 min-w-fit">
+            <span class="font-medium">{{ Math.round(categoryData.actualPercentage) }}/{{ categoryData.target }}%</span>
+            <span 
+              class="text-xs px-1 py-0.5 rounded text-white w-5 text-center"
+              :class="{
+                'bg-success': categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.EXCELLENT,
+                'bg-warning': categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.WARNING && categoryData.actualPercentage < categoryData.target * PERFORMANCE_THRESHOLDS.EXCELLENT,
+                'bg-error': categoryData.actualPercentage < categoryData.target * PERFORMANCE_THRESHOLDS.WARNING
+              }"
+              :title="`${categoryData.eventCount} event${categoryData.eventCount !== 1 ? 's' : ''}`"
+            >
+              {{ categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.EXCELLENT ? '✓' : 
+                categoryData.actualPercentage >= categoryData.target * PERFORMANCE_THRESHOLDS.WARNING ? '!' : '✗' }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
-    </div>
+    
+    <!-- Category Settings Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showCategorySettingsModal }">
+      <div class="modal-box max-w-4xl">
+        <h3 class="font-bold text-lg mb-4">Category Settings</h3>
+        <CategorySettings
+          :categories="categoryStore.categories"
+          @add-category="showAddCategoryModal = true"
+          @edit-category="editCategory"
+          @delete-category="confirmDeleteCategory"
+        />
+        <div class="modal-action">
+          <button class="btn" @click="closeCategorySettingsModal">Close</button>
+        </div>
+      </div>
+      <form
+        method="dialog"
+        class="modal-backdrop"
+        @click="closeCategorySettingsModal"
+      >
+        <button>close</button>
+      </form>
+    </dialog>
+
+    <!-- Add/Edit Category Modal -->
+    <CategoryModal
+      :is-open="showAddCategoryModal || showEditCategoryModal"
+      :editing-category="editingCategory"
+      @close="closeCategoryModal"
+      @save="saveCategory"
+    />
+
+    <!-- Delete Category Confirmation Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showDeleteCategoryModal }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Confirm Deletion</h3>
+        <p class="py-4">
+          Are you sure you want to delete the category "{{ categoryToDelete?.name }}"? This action cannot be undone.
+        </p>
+        <div class="modal-action">
+          <button class="btn" @click="showDeleteCategoryModal = false">
+            Cancel
+          </button>
+          <button class="btn btn-error" @click="deleteCategory">Delete</button>
+        </div>
+      </div>
+      <form
+        method="dialog"
+        class="modal-backdrop"
+        @click="showDeleteCategoryModal = false"
+      >
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import { PERFORMANCE_THRESHOLDS } from "@/constants/display"
+import { type Category, useCategoryStore } from "@/stores/categories"
 import MonthlyStatsSkeleton from "./skeletons/MonthlyStatsSkeleton.vue"
+import CategorySettings from "./CategorySettings.vue"
+import CategoryModal, { type CategoryFormData } from "./CategoryModal.vue"
 
 interface CategoryAnalytics {
   id: string
@@ -138,7 +196,62 @@ interface Props {
 
 defineProps<Props>()
 
-defineEmits<{
-  "open-settings": []
-}>()
+// Store and refs
+const categoryStore = useCategoryStore()
+
+// Modal states
+const showCategorySettingsModal = ref(false)
+const showAddCategoryModal = ref(false)
+const showEditCategoryModal = ref(false)
+const showDeleteCategoryModal = ref(false)
+const editingCategory = ref<Category | null>(null)
+const categoryToDelete = ref<Category | null>(null)
+
+// Modal handlers
+function closeCategorySettingsModal() {
+  showCategorySettingsModal.value = false
+}
+
+function editCategory(category: Category) {
+  editingCategory.value = category
+  showEditCategoryModal.value = true
+}
+
+function confirmDeleteCategory(category: Category) {
+  categoryToDelete.value = category
+  showDeleteCategoryModal.value = true
+}
+
+async function deleteCategory() {
+  if (categoryToDelete.value) {
+    try {
+      await categoryStore.deleteCategory(categoryToDelete.value.id)
+      showDeleteCategoryModal.value = false
+      categoryToDelete.value = null
+    } catch (error) {
+      console.error("Failed to delete category:", error)
+      // Error toast is already shown by the store, just keep modal open
+    }
+  }
+}
+
+async function saveCategory(data: CategoryFormData) {
+  try {
+    if (editingCategory.value) {
+      await categoryStore.updateCategory(editingCategory.value.id, data)
+    } else {
+      await categoryStore.addCategory(data)
+    }
+    closeCategoryModal()
+  } catch (error) {
+    console.error("Failed to save category:", error)
+    // Error toast is already shown by the store, just keep modal open
+  }
+}
+
+function closeCategoryModal() {
+  showAddCategoryModal.value = false
+  showEditCategoryModal.value = false
+  editingCategory.value = null
+}
 </script>
