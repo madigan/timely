@@ -1,5 +1,6 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
+import { useToastStore } from "./toast"
 
 /**
  * Represents a category for organizing and tracking church events
@@ -56,14 +57,28 @@ export const useCategoryStore = defineStore("settings", () => {
       })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Authentication required")
+        }
         throw new Error(`Failed to fetch categories: ${response.statusText}`)
       }
 
       const data = await response.json()
       categories.value = data.categories
+      console.log(`✅ Loaded ${categories.value.length} categories`)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to fetch categories"
+      const toastStore = useToastStore()
       console.error("Error fetching categories:", err)
+      
+      
+      error.value = err instanceof Error ? err.message : "Failed to fetch categories"
+      
+      // Show user-friendly error message
+      if (err instanceof Error && err.message === "Authentication required") {
+        toastStore.showToast("Please sign in to access categories", "warning")
+      } else {
+        toastStore.showToast("Failed to load categories. Please check your connection.", "error")
+      }
     } finally {
       loading.value = false
     }
@@ -87,10 +102,16 @@ export const useCategoryStore = defineStore("settings", () => {
 
       const data = await response.json()
       categories.value.push(data.category)
+      
+      const toastStore = useToastStore()
+      toastStore.showToast(`Category "${category.name}" created successfully`, "success")
+      
       return data.category.id
     } catch (err) {
+      const toastStore = useToastStore()
       error.value = err instanceof Error ? err.message : "Failed to create category"
       console.error("Error creating category:", err)
+      toastStore.showToast("Failed to create category. Please try again.", "error")
       throw err
     }
   }
@@ -125,11 +146,16 @@ export const useCategoryStore = defineStore("settings", () => {
 
       const data = await response.json()
       categories.value[index] = data.category
+      
+      const toastStore = useToastStore()
+      toastStore.showToast(`Category "${data.category.name}" updated successfully`, "success")
     } catch (err) {
+      const toastStore = useToastStore()
       // Revert optimistic update on error
       categories.value[index] = originalCategory
       error.value = err instanceof Error ? err.message : "Failed to update category"
       console.error("Error updating category:", err)
+      toastStore.showToast("Failed to update category. Please try again.", "error")
       throw err
     }
   }
@@ -157,17 +183,22 @@ export const useCategoryStore = defineStore("settings", () => {
         categories.value.splice(index, 0, deletedCategory)
         throw new Error(`Failed to delete category: ${response.statusText}`)
       }
+      
+      const toastStore = useToastStore()
+      toastStore.showToast(`Category "${deletedCategory.name}" deleted successfully`, "success")
     } catch (err) {
+      const toastStore = useToastStore()
       // Revert optimistic delete on error
       categories.value.splice(index, 0, deletedCategory)
       error.value = err instanceof Error ? err.message : "Failed to delete category"
       console.error("Error deleting category:", err)
+      toastStore.showToast("Failed to delete category. Please try again.", "error")
       throw err
     }
   }
 
-  // Initialize categories on store creation
-  fetchCategories()
+  // Note: Categories are now loaded explicitly after authentication
+  // instead of auto-initializing to avoid 401 errors
 
   return {
     categories,

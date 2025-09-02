@@ -1,10 +1,12 @@
-import crypto from "crypto"
+import crypto from "node:crypto"
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } from "./auth.env"
-
-// Encryption key for token storage
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex")
+import {
+  ENCRYPTION_KEY,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI,
+} from "../../env"
 
 export const oauth2Client = new OAuth2Client(
   GOOGLE_CLIENT_ID,

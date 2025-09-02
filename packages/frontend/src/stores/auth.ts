@@ -30,7 +30,7 @@ export const useAuthStore = defineStore("auth", () => {
     const hadPreviousSession = hasSessionCookies()
 
     try {
-      const response = await fetch("/auth/profile", {
+      const response = await fetch("/api/auth/profile", {
         credentials: "include",
       })
 
@@ -67,13 +67,13 @@ export const useAuthStore = defineStore("auth", () => {
     // Mark that user is attempting to authenticate
     hasAttemptedAuth.value = true
     // Redirect to backend OAuth endpoint
-    window.location.href = "/auth/google"
+    window.location.href = "/api/auth/google"
   }
 
   async function logout() {
     isLoading.value = true
     try {
-      await fetch("/auth/logout", {
+      await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       })

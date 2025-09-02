@@ -1,11 +1,11 @@
 import { Elysia, t } from "elysia"
+import requireAuth from "../auth/auth.middleware.ts"
 import {
   createCategory,
   deleteById,
   getCategoriesByUserId,
   updateCategory,
-} from "../services/categories/categories.service.ts"
-import { requireAuth } from "./auth.routes.ts"
+} from "./categories.service.ts"
 
 // Category validation schema
 const categorySchema = t.Object({
@@ -15,8 +15,8 @@ const categorySchema = t.Object({
   target: t.Number({ minimum: 0, maximum: 100 }),
 })
 
-export const categoryRoutes = new Elysia({ prefix: "/api/categories" })
-  .use(requireAuth())
+export const categoryRoutes = new Elysia({ prefix: "/categories" })
+  .derive(requireAuth("CATEGORIES"))
 
   // Get all categories for authenticated user
   .get("/", async ({ userId, set }) => {

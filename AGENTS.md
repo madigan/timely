@@ -93,6 +93,7 @@ Responsive calendar grid with print optimization for organizational planning.
 - **users**: User account information and encrypted OAuth tokens
 - **sessions**: User session management with expiration
 - **categories**: User-defined event categories with keywords and targets
+- **important_event_settings**: User-specific important event keywords and preferences
 - **migrations**: Database migration tracking
 
 ### Key Relationships

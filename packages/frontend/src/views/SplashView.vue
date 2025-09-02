@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen">
-
     <!-- Loading state -->
     <div v-if="authStore.isLoading" class="min-h-screen flex items-center justify-center">
       <div class="text-center">
@@ -9,23 +8,17 @@
       </div>
     </div>
     
-    <!-- Logged out state - Hero and Features -->
-    <div v-else-if="!isLoggedIn()">
+    <!-- Splash page content -->
+    <div v-else>
       <HeroSection @login="login" />
       <FeaturesSection @getStarted="login" />
-    </div>
-    
-    <!-- Logged in state - Calendar Grid -->
-    <div v-else>
-      <CalendarGrid />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue"
+import { onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import CalendarGrid from "@/components/CalendarGrid.vue"
 import FeaturesSection from "@/components/FeaturesSection.vue"
 import HeroSection from "@/components/HeroSection.vue"
 import { useAuthStore } from "@/stores/auth"
@@ -36,6 +29,16 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
 const { login, isLoggedIn, initializeAuth } = authStore
+
+// Watch for authentication changes - redirect to calendar if user logs in
+watch(
+  () => authStore.isLoggedIn(),
+  (newIsLoggedIn) => {
+    if (newIsLoggedIn) {
+      router.push("/calendar")
+    }
+  }
+)
 
 // Watch for authentication errors and show toast
 watch(
@@ -59,6 +62,12 @@ const errorMessages: Record<string, string> = {
 
 onMounted(async () => {
   await initializeAuth()
+
+  // If user is already authenticated, redirect to calendar
+  if (authStore.isLoggedIn()) {
+    router.push("/calendar")
+    return
+  }
 
   // Handle OAuth errors from URL params
   const error = route.query.error as string

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
+import { useToastStore } from "./toast"
 
 /**
  * Settings for identifying and displaying important events
@@ -44,7 +45,7 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
     error.value = null
 
     try {
-      const response = await fetch("/important-events/settings", {
+      const response = await fetch("/api/important-events/settings", {
         credentials: "include",
       })
 
@@ -60,8 +61,12 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
         throw new Error(`Failed to load settings: ${response.statusText}`)
       }
     } catch (err) {
+      const toastStore = useToastStore()
       console.error("Error loading important event settings:", err)
       error.value = err instanceof Error ? err.message : "Failed to load settings"
+      
+      // Show user-friendly error message
+      toastStore.showToast("Failed to load important events settings. Using defaults.", "warning")
     } finally {
       isLoading.value = false
     }
@@ -75,7 +80,7 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
     error.value = null
 
     try {
-      const response = await fetch("/important-events/settings", {
+      const response = await fetch("/api/important-events/settings", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -96,8 +101,10 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
         throw new Error(`Failed to save settings: ${response.statusText}`)
       }
     } catch (err) {
+      const toastStore = useToastStore()
       console.error("Error saving important event settings:", err)
       error.value = err instanceof Error ? err.message : "Failed to save settings"
+      toastStore.showToast("Failed to save important events settings. Please try again.", "error")
       throw err // Re-throw so UI can handle the error
     } finally {
       isLoading.value = false

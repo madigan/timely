@@ -34,13 +34,15 @@ The **Timely Backend** is a Bun-based API server built with the Elysia web frame
 packages/backend/
   migrations/
     202508271438.ts          # Database migration files
+    202509011459-important-events-settings.ts # Important events settings table
   src/
     env.ts                   # Environment configuration
     index.ts                 # Main server entry point
-    routes/
-      auth.routes.ts         # Authentication endpoints (/auth/*)
-      calendar.routes.ts     # Calendar API endpoints (/api/calendar/*)
-      categories.routes.ts   # Category management endpoints (/api/categories/*)
+   routes/
+       auth.routes.ts         # Authentication endpoints (/api/auth/*)
+       calendar.routes.ts     # Calendar API endpoints (/api/calendar/*)
+       categories.routes.ts   # Category management endpoints (/api/categories/*)
+       importantEvents.routes.ts # Important events settings endpoints (/api/important-events/*)
     scripts/
       migrate-status.ts      # Check migration status
       migrate.ts             # Run database migrations
@@ -54,6 +56,8 @@ packages/backend/
       db/
         database.env.ts      # Database environment config
         database.service.ts  # Database connection and queries
+      importantEvents/
+        importantEvents.service.ts # Important events settings management
       calendar.ts            # Google Calendar API integration
   .gitignore
   package.json
@@ -94,6 +98,16 @@ packages/backend/
 - **User-specific Categories**: Categories belong to individual users
 - **Pre-configured Categories**: Default categories for church/ministry use cases
 
+### 4. Important Events Management
+- **Important Events Service**: `src/services/importantEvents/importantEvents.service.ts` - Settings management
+- **Important Events Routes**: `src/routes/importantEvents.routes.ts` - Settings endpoints
+
+#### Features
+- **User-specific Settings**: Per-user important event keywords and preferences
+- **Keyword-based Detection**: Configurable keywords for identifying important events
+- **Display Limits**: Control number of important events shown
+- **Default Settings**: Automatic creation of default settings for new users
+
 ### 4. Database Layer
 - **Database Service**: `src/services/db/database.service.ts` - Connection and queries
 - **Migrations**: `migrations/` - Database schema management
@@ -102,6 +116,7 @@ packages/backend/
 - **users**: User accounts with encrypted OAuth tokens
 - **sessions**: User session management with expiration
 - **categories**: User-defined categories with keywords and targets
+- **important_event_settings**: User-specific important event keywords and preferences
 - **migrations**: Migration tracking
 
 ## Development Commands
@@ -135,7 +150,7 @@ bun run type-check
 # Google OAuth Configuration
 GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 
 # Encryption key for token storage (generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 # Must be exactly 64 hex characters (32 bytes)
@@ -154,9 +169,9 @@ NODE_ENV=development
 3. Enable the Google Calendar API
 4. Configure OAuth consent screen
 5. Create OAuth 2.0 credentials (Web application)
-6. Add authorized redirect URIs:
-   - `http://localhost:3000/auth/google/callback` (development)
-   - Your production domain callback URL
+ 6. Add authorized redirect URIs:
+    - `http://localhost:3000/api/auth/google/callback` (development)
+    - Your production domain callback URL
 7. Copy the Client ID and Client Secret to your `.env` file
 8. Generate an encryption key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
@@ -193,28 +208,52 @@ interface Category {
 }
 ```
 
+### Important Event Settings Interface
+```typescript
+interface ImportantEventSettings {
+  id: string
+  userId: string
+  keywords: string[]
+  enabled: boolean
+  displayLimit: number
+  createdAt: string
+  updatedAt: string
+}
+
+interface ImportantEventSettingsInput {
+  keywords: string[]
+  enabled: boolean
+  displayLimit: number
+}
+```
+
 ### Database Tables
 - **users**: `id`, `email`, `name`, `picture`, `encrypted_tokens`, `created_at`, `updated_at`
 - **sessions**: `id`, `user_id`, `session_id`, `expires_at`, `created_at`
 - **categories**: `id`, `user_id`, `name`, `color`, `keywords`, `target`, `created_at`, `updated_at`
+- **important_event_settings**: `id`, `user_id`, `keywords`, `enabled`, `display_limit`, `created_at`, `updated_at`
 
 ## API Endpoints
 
 ### Authentication
-- `GET /auth/google` - Initiate OAuth flow
-- `GET /auth/google/callback` - OAuth callback handler
-- `POST /auth/logout` - Logout and clear session
-- `GET /auth/me` - Get current user info
+- `GET /api/auth/google` - Initiate OAuth flow
+- `GET /api/auth/google/callback` - OAuth callback handler
+- `POST /api/auth/logout` - Logout and clear session
+- `GET /api/auth/profile` - Get current user info
 
 ### Calendar
-- `GET /api/calendar` - Get user's calendars
-- `GET /api/calendar/events` - Get calendar events with filtering
+- `GET /api/calendars` - Get user's calendars
+- `GET /api/calendars/events` - Get calendar events with filtering
 
 ### Categories
 - `GET /api/categories` - Get user's categories
 - `POST /api/categories` - Create new category
 - `PUT /api/categories/:id` - Update category
 - `DELETE /api/categories/:id` - Delete category
+
+### Important Events
+- `GET /api/important-events/settings` - Get user's important event settings
+- `PUT /api/important-events/settings` - Update user's important event settings
 
 ## Security Features
 

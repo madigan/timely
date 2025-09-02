@@ -216,10 +216,10 @@ docker compose down
 ## 🔌 API Endpoints
 
 ### Authentication
-- `GET /auth/config` - OAuth configuration status
-- `GET /auth/google` - Initiate Google OAuth flow
-- `GET /auth/google/callback` - OAuth callback handler
-- `GET /auth/profile` - Get authenticated user profile
+- `GET /api/auth/config` - OAuth configuration status
+- `GET /api/auth/google` - Initiate Google OAuth flow
+- `GET /api/auth/google/callback` - OAuth callback handler
+- `GET /api/auth/profile` - Get authenticated user profile
 - `POST /auth/logout` - Logout and clear session
 
 ### Calendar Data

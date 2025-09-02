@@ -1,7 +1,12 @@
 <template>
   <div>
-    <!-- Days of week header -->
-    <div class="grid grid-cols-8 gap-1 mb-2">
+    <!-- Loading State -->
+    <CalendarMonthSkeleton v-if="isLoading" />
+    
+    <!-- Loaded Content -->
+    <div v-else>
+      <!-- Days of week header -->
+      <div class="grid grid-cols-8 gap-1 mb-2">
       <div
         v-for="day in daysOfWeek"
         :key="day"
@@ -108,6 +113,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -124,6 +130,7 @@ import {
   getWeekStart,
 } from "@/utils/events"
 import WeeklyStatsPanel from "./WeeklyStatsPanel.vue"
+import CalendarMonthSkeleton from "./skeletons/CalendarMonthSkeleton.vue"
 
 interface Props {
   year: number
@@ -132,6 +139,7 @@ interface Props {
   categories: Category[]
   startDate?: Date
   endDate?: Date
+  isLoading?: boolean
 }
 
 type Emits = (e: "dayClick", cell: any) => void

@@ -1,6 +1,6 @@
 import type { calendar_v3 } from "googleapis"
-import { createCalendarClient, oauth2Client } from "../auth/oauth.ts"
-import { getUserTokens, needsRefresh, storeUserTokens } from "../auth/tokens.ts"
+import { createCalendarClient, oauth2Client } from "../auth/auth.service.ts"
+import { getUserTokens, needsRefresh, storeUserTokens } from "../auth/tokens.service.ts"
 
 export interface CalendarListItem {
   id: string

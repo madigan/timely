@@ -28,7 +28,10 @@ const getUserInitials = (name?: string) => {
   <header>
     <nav class="navbar bg-base-100 shadow-sm">
       <div class="flex-1">
-        <RouterLink to="/" class="btn btn-ghost text-xl">⏰ Timely</RouterLink>
+        <div class="flex items-center gap-4">
+          <RouterLink to="/" class="btn btn-ghost text-xl">⏰ Timely</RouterLink>
+          <RouterLink v-if="isLoggedIn()" to="/calendar" class="btn btn-ghost">Calendar</RouterLink>
+        </div>
       </div>
       <div class="flex-none">
         <div class="dropdown dropdown-end" v-if="isLoggedIn()">

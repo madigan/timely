@@ -1,51 +1,23 @@
 import { Elysia } from "elysia"
-import { isProduction } from "../env.ts"
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "../services/auth/auth.env.ts"
-import {
-  CALENDAR_SCOPES,
-  generateCSRFState,
-  getUserInfo,
-  oauth2Client,
-} from "../services/auth/oauth.ts"
+import { isProduction } from "../../env.ts"
+import { getUserProfile } from "../calendar/calendar.service.ts"
+import requireAuth from "./auth.middleware.ts"
+import { CALENDAR_SCOPES, generateCSRFState, getUserInfo, oauth2Client } from "./auth.service.ts"
 import {
   createSession,
   deleteSession,
   deleteUserTokens,
   getSessionUserId,
   storeUserTokens,
-} from "../services/auth/tokens.ts"
-import { getUserProfile } from "../services/calendar/calendar.ts"
+} from "./tokens.service.ts"
 
 // CSRF state storage (in production, use Redis)
 const csrfStates = new Map<string, number>() // state -> timestamp
 
-export const authRoutes = new Elysia({ prefix: "/auth" })
-  .get("/google", ({ redirect, set, cookie }) => {
-    // Check if OAuth is configured
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-      set.headers["content-type"] = "text/html"
-      return `
-        <html>
-          <head><title>OAuth Not Configured</title></head>
-          <body style="font-family: system-ui; padding: 2rem; max-width: 600px; margin: 0 auto;">
-            <h1>🚨 Google OAuth Not Configured</h1>
-            <p>The Google OAuth credentials are not set up. Please:</p>
-            <ol>
-              <li>Follow the setup guide in <code>GOOGLE_OAUTH_SETUP.md</code></li>
-              <li>Create a <code>packages/backend/.env</code> file with your credentials</li>
-              <li>Restart the server</li>
-            </ol>
-            <p><a href="/">← Back to Home</a></p>
-            <p><strong>Environment Status:</strong></p>
-            <ul>
-              <li>GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? "✅ Set" : "❌ Missing"}</li>
-              <li>GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? "✅ Set" : "❌ Missing"}</li>
-            </ul>
-          </body>
-        </html>
-      `
-    }
+const userRoutes = new Elysia({ prefix: "/" })
 
+export const authRoutes = new Elysia({ prefix: "/auth" })
+  .get("/google", ({ redirect, cookie }) => {
     const state = generateCSRFState()
 
     // Store CSRF state with timestamp (expires in 10 minutes)
@@ -69,7 +41,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     // Use Elysia's built-in redirect
     return redirect(authUrl)
   })
-
   .get("/google/callback", async ({ query, headers, redirect, set, cookie }) => {
     const { code, state, error } = query as { code?: string; state?: string; error?: string }
 
@@ -166,31 +137,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectUrl}"></head><body>Error occurred. Redirecting...</body></html>`
     }
   })
-
-  .get("/profile", async ({ set, cookie }) => {
-    const sessionId = cookie.session.value
-
-    if (!sessionId) {
-      set.status = 401
-      return { error: "Not authenticated" }
-    }
-
-    const userId = await getSessionUserId(sessionId)
-    if (!userId) {
-      set.status = 401
-      return { error: "Invalid session" }
-    }
-
-    try {
-      const profile = await getUserProfile(userId)
-      return profile
-    } catch (error) {
-      console.error("[Auth]", "Failed to get profile:", error)
-      set.status = 500
-      return { error: "Failed to get profile" }
-    }
-  })
-
   .post("/logout", async ({ cookie }) => {
     const sessionId = cookie.session.value
 
@@ -209,23 +155,14 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     cookie.session.remove()
     return { success: true }
   })
-
-// Middleware to check authentication
-export function requireAuth() {
-  return new Elysia().derive({ as: "global" }, async ({ set, cookie }) => {
-    const sessionId = cookie.session.value
-
-    if (!sessionId) {
-      set.status = 401
-      throw new Error("Not authenticated")
+  .derive(requireAuth("USERS"))
+  .get("/profile", async ({ userId, set }) => {
+    try {
+      const profile = await getUserProfile(userId)
+      return profile
+    } catch (error) {
+      console.error("[Auth]", "Failed to get profile:", error)
+      set.status = 500
+      return { error: "Failed to get profile" }
     }
-
-    const userId = await getSessionUserId(sessionId)
-    if (!userId) {
-      set.status = 401
-      throw new Error("Invalid session")
-    }
-
-    return { userId }
   })
-}

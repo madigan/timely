@@ -2,7 +2,12 @@
   <div
     class="p-8 print:p-0 not-print:max-w-7xl print:w-screen h-full mx-auto"
   >
-    <div class="mb-8 print:hidden">
+    <!-- Full Loading State -->
+    <CalendarGridSkeleton v-if="isInitialLoading" />
+    
+    <!-- Loaded Content -->
+    <div v-else>
+      <div class="mb-8 print:hidden">
       <h1 class="text-3xl font-bold mb-4">Calendar Overview</h1>
       <p class="text-base-content/70 mb-6">
         View your church events across enabled calendars
@@ -56,6 +61,7 @@
               <ImportantEventsPanel
                 :events="month.importantEvents"
                 :month-key="`${month.year}-${month.month}`"
+                :is-loading="isEventsLoading"
                 @event-expanded="onEventExpanded"
                 @open-settings="openImportantEventsSettings"
                 class="h-full"
@@ -67,9 +73,10 @@
           <div class="flex-1">
             <MonthlyStatsPanel
               v-if="
-                month.categoryAnalytics.length > 0 || month.events.length > 0
+                categories.length > 0 || isEventsLoading || isCategoriesLoading
               "
               :category-analytics="month.categoryAnalytics"
+              :is-loading="isEventsLoading || isCategoriesLoading"
               @open-settings="openCategorySettings"
             />
             <div
@@ -77,7 +84,7 @@
               class="bg-base-200/50 rounded-lg p-4 border border-base-300 h-full flex items-center justify-center"
             >
               <div class="text-sm text-base-content/50">
-                No events in this timeframe
+                Loading categories...
               </div>
             </div>
           </div>
@@ -90,6 +97,7 @@
           :categories="categories"
           :startDate="new Date(fromDate)"
           :endDate="new Date(toDate)"
+          :is-loading="isEventsLoading || isCategoriesLoading"
           @dayClick="showDayDetails"
         />
       </div>
@@ -241,14 +249,17 @@
         <button>close</button>
       </form>
     </dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useCalendarStore } from "@/stores/calendars"
 import { type Category, useCategoryStore } from "@/stores/categories"
 import { useImportantEventsStore } from "@/stores/importantEvents"
+import { useAuthStore } from "@/stores/auth"
+import { useToastStore } from "@/stores/toast"
 import { filterImportantEvents } from "@/utils/events"
 import CalendarMonth from "./CalendarMonth.vue"
 import CategoryModal, { type CategoryFormData } from "./CategoryModal.vue"
@@ -256,10 +267,13 @@ import CategorySettings from "./CategorySettings.vue"
 import ImportantEventsPanel from "./ImportantEventsPanel.vue"
 import ImportantEventsSettings from "./ImportantEventsSettings.vue"
 import MonthlyStatsPanel from "./MonthlyStatsPanel.vue"
+import CalendarGridSkeleton from "./skeletons/CalendarGridSkeleton.vue"
 
 const calendarStore = useCalendarStore()
 const categoryStore = useCategoryStore()
 const importantEventsStore = useImportantEventsStore()
+const authStore = useAuthStore()
+const toastStore = useToastStore()
 
 const showModal = ref(false)
 const showImportantEventsModal = ref(false)
@@ -349,8 +363,46 @@ const monthsInRange = computed(() => {
 const { categories } = categoryStore
 const { settings: importantSettings } = importantEventsStore
 
+// Local loading state to ensure skeleton shows during initial load
+const isInitiallyLoading = ref(true)
+
+// Loading states
+const isInitialLoading = computed(() => 
+  isInitiallyLoading.value || calendarStore.isLoading || categoryStore.loading || importantEventsStore.isLoading
+)
+const isEventsLoading = computed(() => calendarStore.isLoading)
+const isCategoriesLoading = computed(() => categoryStore.loading)
+
+// Watch for authentication state to trigger loading
+watch(() => authStore.isLoggedIn(), async (isLoggedIn) => {
+  if (isLoggedIn && categories.length === 0) {
+    console.log("User authenticated, loading categories...")
+    await categoryStore.fetchCategories()
+  }
+}, { immediate: true })
+
 onMounted(async () => {
-  await loadEvents()
+  console.log("CalendarGrid mounting - starting data load...")
+  console.log("Auth state:", { isLoggedIn: authStore.isLoggedIn(), user: authStore.user })
+  console.log("Category state:", { count: categories.length, loading: categoryStore.loading })
+  
+  try {
+    // Load all necessary data after authentication
+    await Promise.all([
+      importantEventsStore.loadSettings(),
+      categoryStore.fetchCategories(), // Explicitly load categories after auth
+      loadEvents()
+    ])
+    console.log("CalendarGrid data loaded successfully")
+    console.log("Final category count:", categories.length)
+  } catch (error) {
+    console.error("Error loading initial data:", error)
+  } finally {
+    // Ensure skeleton shows for at least a brief moment
+    setTimeout(() => {
+      isInitiallyLoading.value = false
+    }, 500)
+  }
 })
 
 async function loadEvents() {
@@ -365,6 +417,17 @@ async function loadEvents() {
 
   allEvents.value = events
 }
+
+
+// Watch for date range changes and reload events
+watch([fromDate, toDate], async () => {
+  try {
+    await loadEvents()
+  } catch (error) {
+    console.error("Error reloading events after date change:", error)
+  }
+}, { debounce: 500 })
+
 
 function resetToDefault() {
   const now = new Date()
@@ -431,21 +494,31 @@ function confirmDeleteCategory(category: Category) {
   showDeleteCategoryModal.value = true
 }
 
-function deleteCategory() {
+async function deleteCategory() {
   if (categoryToDelete.value) {
-    categoryStore.deleteCategory(categoryToDelete.value.id)
-    showDeleteCategoryModal.value = false
-    categoryToDelete.value = null
+    try {
+      await categoryStore.deleteCategory(categoryToDelete.value.id)
+      showDeleteCategoryModal.value = false
+      categoryToDelete.value = null
+    } catch (error) {
+      console.error("Failed to delete category:", error)
+      // Error toast is already shown by the store, just keep modal open
+    }
   }
 }
 
-function saveCategory(data: CategoryFormData) {
-  if (editingCategory.value) {
-    categoryStore.updateCategory(editingCategory.value.id, data)
-  } else {
-    categoryStore.addCategory(data)
+async function saveCategory(data: CategoryFormData) {
+  try {
+    if (editingCategory.value) {
+      await categoryStore.updateCategory(editingCategory.value.id, data)
+    } else {
+      await categoryStore.addCategory(data)
+    }
+    closeCategoryModal()
+  } catch (error) {
+    console.error("Failed to save category:", error)
+    // Error toast is already shown by the store, just keep modal open
   }
-  closeCategoryModal()
 }
 
 function closeCategoryModal() {
@@ -520,7 +593,7 @@ function calculateMonthCategoryAnalytics(monthEvents: any[]) {
     totalHours += hours
   })
 
-  // Calculate compact analytics data - only show categories with events
+  // Calculate analytics data - show all categories to provide complete overview
   return categories
     .map((category) => {
       const stats = categoryStats[category.id]
@@ -536,7 +609,6 @@ function calculateMonthCategoryAnalytics(monthEvents: any[]) {
         hours: stats.hours,
       }
     })
-    .filter((cat) => cat.eventCount > 0) // Only show categories with events
     .sort((a, b) => b.target - a.target) // Sort by target percentage (descending)
 }
 

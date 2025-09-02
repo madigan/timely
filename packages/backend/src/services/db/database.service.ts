@@ -2,14 +2,14 @@ import { readdir } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { SQL } from "bun"
-import { databaseUrl } from "./database.env"
+import { DATABASE_URL } from "../../env"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const MIGRATIONS_PATH = "../../../migrations"
 
-export const sql = new SQL(databaseUrl)
+export const sql = new SQL(DATABASE_URL)
 
 // Migration interface
 interface Migration {

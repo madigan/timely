@@ -1,6 +1,7 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
 import { useAuthStore } from "./auth"
+import { useToastStore } from "./toast"
 
 export interface Calendar {
   id: string
@@ -61,8 +62,17 @@ export const useCalendarStore = defineStore("calendar", () => {
       calendars.value = response
       return calendars.value
     } catch (err) {
+      const toastStore = useToastStore()
       error.value = err instanceof Error ? err.message : "Failed to fetch calendars"
       console.error("Failed to fetch calendars:", err)
+
+      // Show user-friendly error message
+      if (err instanceof Error && err.message === "Authentication required") {
+        toastStore.showToast("Please sign in to access your calendars", "warning")
+      } else {
+        toastStore.showToast("Failed to load calendars. Please check your connection.", "error")
+      }
+
       return []
     } finally {
       isLoading.value = false
@@ -86,23 +96,45 @@ export const useCalendarStore = defineStore("calendar", () => {
 
       return events
     } catch (err) {
+      const toastStore = useToastStore()
       console.error(`Failed to fetch events for calendar ${calendarId}:`, err)
+
+      // Show user-friendly error message
+      if (err instanceof Error && err.message === "Authentication required") {
+        toastStore.showToast("Please sign in to access calendar events", "warning")
+      } else {
+        toastStore.showToast("Failed to load calendar events. Please try again.", "error")
+      }
+
       return []
     }
   }
 
   // Get all events from all enabled calendars
   async function getAllEvents(timeMin?: string, timeMax?: string) {
+    isLoading.value = true
     try {
       const params = new URLSearchParams()
       if (timeMin) params.append("timeMin", timeMin)
       if (timeMax) params.append("timeMax", timeMax)
 
-      const url = `/api/events${params.toString() ? "?" + params.toString() : ""}`
-      return await apiCall(url)
+      const url = `/api/calendars/events${params.toString() ? "?" + params.toString() : ""}`
+      const result = await apiCall(url)
+      return result
     } catch (err) {
+      const toastStore = useToastStore()
       console.error("Failed to fetch all events:", err)
+
+      // Show user-friendly error message
+      if (err instanceof Error && err.message === "Authentication required") {
+        toastStore.showToast("Please sign in to access events", "warning")
+      } else {
+        toastStore.showToast("Failed to load events. Please check your connection.", "error")
+      }
+
       return []
+    } finally {
+      isLoading.value = false
     }
   }
 

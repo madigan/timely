@@ -183,6 +183,18 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
+### API Integration
+The frontend communicates with the backend API using the following route structure:
+- **API Calls**: All backend API endpoints are prefixed with `/api/*`
+- **Authentication**: Auth-related endpoints use `/api/auth/*`
+- **Static Assets**: All other routes (`/*`) serve the SPA's static assets
+
+Example API calls:
+- Authentication: `${VITE_API_BASE_URL}/api/auth/profile`
+- Calendar data: `${VITE_API_BASE_URL}/api/calendars/events`
+- Categories: `${VITE_API_BASE_URL}/api/categories`
+- Important events: `${VITE_API_BASE_URL}/api/important-events/settings`
+
 ### Build Configuration
 - **Vite Config**: `vite.config.ts` - Build tool configuration
 - **TypeScript Configs**:
@@ -295,6 +307,8 @@ interface User {
 
 ## Routing Configuration
 
+The frontend is a single-page application (SPA) that handles all non-API routes (`/*`) by serving static assets. The Vue Router manages client-side navigation for the following routes:
+
 ```typescript
 // src/router/index.ts
 const routes = [
@@ -302,6 +316,8 @@ const routes = [
   { path: '/settings', component: SettingsView }
 ]
 ```
+
+**Note**: API routes (`/api/*`) are handled by the backend server, while all other routes serve the SPA's static assets.
 
 ## Testing Setup
 

@@ -142,6 +142,16 @@ interface Category {
 ### Important Event Settings
 ```typescript
 interface ImportantEventSettings {
+  id: string;
+  userId: string;
+  keywords: string[];
+  enabled: boolean;
+  displayLimit: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ImportantEventSettingsInput {
   keywords: string[];
   enabled: boolean;
   displayLimit: number;
@@ -180,6 +190,7 @@ function sanitizeString(input: string): string;
 function formatDate(date: Date): string;
 function calculateDuration(start: string, end: string): number;
 function groupEventsByCategory(events: CalendarEvent[], categories: Category[]): Record<string, CalendarEvent[]>;
+function toPGArray(arr: string[]): string; // Convert string array to PostgreSQL array format
 ```
 
 ### Constants
@@ -202,7 +213,7 @@ export * from './utils';
 ### Types Export (`src/types/index.ts`)
 ```typescript
 // Export all type definitions
-export type { User, UserTokens, Calendar, CalendarEvent, Category, ImportantEventSettings };
+export type { User, UserTokens, Calendar, CalendarEvent, Category, ImportantEventSettings, ImportantEventSettingsInput };
 export type { ApiResponse, PaginatedResponse };
 ```
 

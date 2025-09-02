@@ -37,3 +37,19 @@ export interface Calendar {
   isEnabled?: boolean
   events?: CalendarEvent[]
 }
+
+export interface ImportantEventSettings {
+  id: string
+  userId: string
+  keywords: string[]
+  enabled: boolean
+  displayLimit: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ImportantEventSettingsInput {
+  keywords: string[]
+  enabled: boolean
+  displayLimit: number
+}
