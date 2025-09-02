@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia"
 import { ref } from "vue"
 import { RouterLink } from "vue-router"
-import { storeToRefs } from "pinia"
 import { useAuthStore } from "@/stores/auth"
 
 const authStore = useAuthStore()

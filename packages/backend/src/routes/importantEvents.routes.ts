@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia"
-import { requireAuth } from "./auth.routes.ts"
 import {
   getOrCreateImportantEventSettings,
-  updateImportantEventSettings,
   type ImportantEventSettingsInput,
+  updateImportantEventSettings,
 } from "../services/importantEvents/importantEvents.service.ts"
+import { requireAuth } from "./auth.routes.ts"
 
 export const importantEventsRoutes = new Elysia({ prefix: "/important-events" })
   .use(requireAuth())

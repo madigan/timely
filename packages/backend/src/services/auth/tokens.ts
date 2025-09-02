@@ -1,7 +1,7 @@
-import { sql } from "../db/database.service.ts"
-import { decryptToken, encryptToken } from "./oauth.ts"
-import { createDefaultImportantEventSettings } from "../importantEvents/importantEvents.service.ts"
 import { initializeUserCategories } from "../categories/categories.service.ts"
+import { sql } from "../db/database.service.ts"
+import { createDefaultImportantEventSettings } from "../importantEvents/importantEvents.service.ts"
+import { decryptToken, encryptToken } from "./oauth.ts"
 
 export interface UserTokens {
   userId: string

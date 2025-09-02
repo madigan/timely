@@ -19,19 +19,21 @@ export interface ImportantEventSettingsInput {
 
 // Default keywords for new users
 const DEFAULT_KEYWORDS = [
-  "important", 
-  "urgent", 
-  "critical", 
-  "deadline", 
-  "meeting", 
-  "board", 
-  "emergency"
+  "important",
+  "urgent",
+  "critical",
+  "deadline",
+  "meeting",
+  "board",
+  "emergency",
 ]
 
 /**
  * Get important event settings for a user
  */
-export async function getImportantEventSettings(userId: string): Promise<ImportantEventSettings | null> {
+export async function getImportantEventSettings(
+  userId: string
+): Promise<ImportantEventSettings | null> {
   try {
     const rows = await sql`
       SELECT 
@@ -60,9 +62,11 @@ export async function getImportantEventSettings(userId: string): Promise<Importa
 /**
  * Create default important event settings for a new user
  */
-export async function createDefaultImportantEventSettings(userId: string): Promise<ImportantEventSettings> {
+export async function createDefaultImportantEventSettings(
+  userId: string
+): Promise<ImportantEventSettings> {
   try {
-    const keywords = toPGArray(DEFAULT_KEYWORDS);
+    const keywords = toPGArray(DEFAULT_KEYWORDS)
     const rows = await sql`
       INSERT INTO important_event_settings (user_id, keywords, enabled, display_limit)
       VALUES (
@@ -92,7 +96,7 @@ export async function createDefaultImportantEventSettings(userId: string): Promi
  * Update important event settings for a user
  */
 export async function updateImportantEventSettings(
-  userId: string, 
+  userId: string,
   settings: ImportantEventSettingsInput
 ): Promise<ImportantEventSettings> {
   try {
@@ -103,10 +107,10 @@ export async function updateImportantEventSettings(
 
     // Clean and validate keywords
     const cleanKeywords = settings.keywords
-      .map(k => k.trim().toLowerCase())
-      .filter(k => k.length > 0)
+      .map((k) => k.trim().toLowerCase())
+      .filter((k) => k.length > 0)
       .filter((k, i, arr) => arr.indexOf(k) === i) // Remove duplicates
-    const keywords = toPGArray(cleanKeywords);
+    const keywords = toPGArray(cleanKeywords)
 
     const rows = await sql`
       UPDATE important_event_settings 
@@ -140,14 +144,16 @@ export async function updateImportantEventSettings(
 /**
  * Get or create important event settings for a user
  */
-export async function getOrCreateImportantEventSettings(userId: string): Promise<ImportantEventSettings> {
+export async function getOrCreateImportantEventSettings(
+  userId: string
+): Promise<ImportantEventSettings> {
   try {
     let settings = await getImportantEventSettings(userId)
-    
+
     if (!settings) {
       settings = await createDefaultImportantEventSettings(userId)
     }
-    
+
     return settings
   } catch (error) {
     console.error("Error getting or creating important event settings:", error)

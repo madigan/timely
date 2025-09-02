@@ -39,7 +39,7 @@ export const useImportantEventsStore = defineStore("importantEvents", () => {
    */
   async function loadSettings(): Promise<void> {
     if (initialized.value) return
-    
+
     isLoading.value = true
     error.value = null
 

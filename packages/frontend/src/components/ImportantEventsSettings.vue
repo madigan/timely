@@ -107,8 +107,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
 import { storeToRefs } from "pinia"
+import { onMounted, ref } from "vue"
 import { useImportantEventsStore } from "@/stores/importantEvents"
 import { useToastStore } from "@/stores/toast"
 
@@ -173,7 +173,7 @@ async function handleRemoveKeyword(keyword: string) {
 async function handleUpdateDisplayLimit(event: Event) {
   const target = event.target as HTMLInputElement
   const limit = parseInt(target.value)
-  
+
   isUpdating.value = true
   try {
     await importantEventsStore.setDisplayLimit(limit)

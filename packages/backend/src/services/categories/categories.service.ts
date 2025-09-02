@@ -1,5 +1,5 @@
-import { sql } from "../db/database.service.ts"
 import { toPGArray } from "@timely/shared"
+import { sql } from "../db/database.service.ts"
 
 export interface Category {
   id: string
