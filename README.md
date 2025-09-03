@@ -132,9 +132,9 @@ This runs:
 **Individual Services:**
 ```bash
 # Frontend only
-cd packages/frontend && bun dev
+cd packages/frontend && bun run dev
 
-# Backend only  
+# Backend only
 cd packages/backend && bun run dev
 ```
 
@@ -163,34 +163,57 @@ This serves the built Vue app and API endpoints on `http://localhost:3000`.
 
 ### Tables
 
-**user_tokens** - Stores encrypted OAuth tokens and user information:
-- `user_id` (PRIMARY KEY)
-- `access_token` (AES-256 encrypted)
-- `refresh_token` (AES-256 encrypted, optional)
-- `expiry_date` (timestamp)
-- `email`, `name`, `picture` (user profile)
-- `created_at`, `updated_at`
+**users** - Stores user account information and encrypted OAuth tokens:
+- `id` (PRIMARY KEY, TEXT)
+- `access_token` (TEXT, encrypted with AES-256-CBC)
+- `refresh_token` (TEXT, optional, encrypted with AES-256-CBC)
+- `expiry_date` (BIGINT, timestamp)
+- `email` (TEXT, user email)
+- `name` (TEXT, user display name)
+- `picture` (TEXT, user profile picture URL)
+- `created_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
 
 **sessions** - Manages user sessions:
-- `session_id` (PRIMARY KEY)
-- `user_id`
-- `created_at`
-- `expires_at` (auto-expires after 30 days)
+- `session_id` (PRIMARY KEY, TEXT)
+- `user_id` (TEXT, foreign key to users.id)
+- `created_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
+- `expires_at` (TIMESTAMP, default CURRENT_TIMESTAMP + 30 days)
+
+**categories** - User-defined event categories:
+- `id` (PRIMARY KEY, TEXT, default gen_random_uuid())
+- `user_id` (TEXT, foreign key to users.id, ON DELETE CASCADE)
+- `name` (TEXT, category name)
+- `color` (TEXT, hex color code, must match ^#[0-9A-Fa-f]{6}$)
+- `keywords` (TEXT[], array of keywords for auto-categorization)
+- `target` (INTEGER, percentage target 0-100)
+- `created_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
+
+**important_event_settings** - User-specific important event keywords and preferences:
+- `id` (PRIMARY KEY, TEXT, default gen_random_uuid())
+- `user_id` (TEXT, foreign key to users.id, ON DELETE CASCADE)
+- `keywords` (TEXT[], array of keywords for important event detection)
+- `enabled` (BOOLEAN, default true)
+- `display_limit` (INTEGER, 1-20, default 3)
+- `created_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
 
 **migrations** - Tracks database migrations:
-- `name` (PRIMARY KEY) - Migration filename
-- `status` - `IN_PROGRESS` or `COMPLETED`
-- `created_at`, `updated_at` - Timestamps
+- `name` (PRIMARY KEY, TEXT) - Migration filename
+- `status` (TEXT) - `IN_PROGRESS` or `COMPLETED`
+- `created_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP, default CURRENT_TIMESTAMP)
 
 ### Database Management
 
 **Migration Commands:**
 ```bash
 # Run pending migrations
-bun run migrate:run
+cd packages/backend && bun run migrate:run
 
 # Check migration status
-bun run migrate:status
+cd packages/backend && bun run migrate:status
 ```
 
 **Database Commands:**
@@ -216,19 +239,28 @@ docker compose down
 ## 🔌 API Endpoints
 
 ### Authentication
-- `GET /api/auth/config` - OAuth configuration status
-- `GET /api/auth/google` - Initiate Google OAuth flow
-- `GET /api/auth/google/callback` - OAuth callback handler
-- `GET /api/auth/profile` - Get authenticated user profile
+- `GET /auth/google` - Initiate Google OAuth flow
+- `GET /auth/google/callback` - OAuth callback handler
 - `POST /auth/logout` - Logout and clear session
+- `GET /auth/profile` - Get authenticated user profile
 
 ### Calendar Data
 - `GET /api/calendars` - Get user's Google calendars
 - `GET /api/calendars/:id/events` - Get events for specific calendar
-- `GET /api/events` - Get events from all enabled calendars
+- `GET /api/calendars/events` - Get events from all enabled calendars
+
+### Categories
+- `GET /api/categories` - Get user's categories
+- `POST /api/categories` - Create new category
+- `PUT /api/categories/:id` - Update existing category
+- `DELETE /api/categories/:id` - Delete category
+
+### Important Events
+- `GET /api/important-events/settings` - Get user's important event settings
+- `PUT /api/important-events/settings` - Update user's important event settings
 
 ### Health Check
-- `GET /api/hello-world` - Test endpoint
+- `GET /api/health` - Health check endpoint
 
 ## 📁 Project Structure
 
@@ -238,45 +270,81 @@ timely/
 │   ├── frontend/                 # Vue 3 Application
 │   │   ├── src/
 │   │   │   ├── components/       # Vue components
+│   │   │   │   ├── skeletons/    # Loading skeleton components
 │   │   │   │   ├── CalendarGrid.vue      # Main calendar display
-│   │   │   │   ├── Header.vue           # Navigation with auth
-│   │   │   │   ├── CategoryModal.vue    # Category management
+│   │   │   │   ├── CalendarMonth.vue     # Individual month component
+│   │   │   │   ├── CategoryModal.vue     # Category management modal
+│   │   │   │   ├── CategorySettings.vue  # Category settings interface
+│   │   │   │   ├── Header.vue            # Navigation with auth
+│   │   │   │   ├── ImportantEventsPanel.vue # Important events display
+│   │   │   │   ├── ImportantEventsSettings.vue # Important events config
+│   │   │   │   ├── MonthAnalyticsModal.vue # Monthly analytics modal
+│   │   │   │   ├── MonthlyStatsPanel.vue # Monthly statistics
+│   │   │   │   ├── WeeklyStatsPanel.vue  # Weekly statistics
 │   │   │   │   └── ...
 │   │   │   ├── stores/          # Pinia state management
 │   │   │   │   ├── auth.ts              # Authentication state
 │   │   │   │   ├── calendars.ts         # Calendar data & events
 │   │   │   │   ├── categories.ts        # Event categorization
-│   │   │   │   └── importantEvents.ts   # Important events
+│   │   │   │   ├── importantEvents.ts   # Important events state
+│   │   │   │   └── toast.ts             # Toast notifications
 │   │   │   ├── views/           # Page components
-│   │   │   │   ├── HomeView.vue         # Dashboard/calendar view
-│   │   │   │   └── SettingsView.vue     # Configuration
+│   │   │   │   ├── CalendarView.vue     # Main calendar view
+│   │   │   │   ├── SettingsView.vue     # Configuration page
+│   │   │   │   └── SplashView.vue       # Landing page
 │   │   │   ├── utils/           # Utility functions
-│   │   │   └── router/          # Vue Router config
+│   │   │   │   └── events.ts            # Event utility functions
+│   │   │   ├── lib/             # Library code
+│   │   │   │   ├── __tests__/           # Test files
+│   │   │   │   └── eventAnalytics.ts    # Analytics utilities
+│   │   │   ├── router/          # Vue Router config
+│   │   │   └── constants/        # Application constants
+│   │   ├── index.html           # HTML template
 │   │   └── vite.config.ts       # Vite configuration
 │   ├── backend/                  # Bun + Elysia API
 │   │   ├── src/
-│   │   │   ├── auth/            # Authentication modules
-│   │   │   │   ├── oauth.ts             # Google OAuth config
-│   │   │   │   └── tokens.ts            # Token management
-│   │   │   ├── db/              # Database layer
-│   │   │   │   └── database.ts          # PostgreSQL connection & migrations
+│   │   │   ├── services/        # Service modules
+│   │   │   │   ├── auth/        # Authentication services
+│   │   │   │   │   ├── auth.middleware.ts   # Auth middleware
+│   │   │   │   │   ├── auth.routes.ts       # Auth routes
+│   │   │   │   │   ├── auth.service.ts      # Auth business logic
+│   │   │   │   │   └── tokens.service.ts    # Token management
+│   │   │   │   ├── calendar/    # Calendar services
+│   │   │   │   │   ├── calendar.routes.ts   # Calendar routes
+│   │   │   │   │   └── calendar.service.ts  # Calendar API logic
+│   │   │   │   ├── categories/  # Category services
+│   │   │   │   │   ├── categories.routes.ts # Category routes
+│   │   │   │   │   └── categories.service.ts # Category business logic
+│   │   │   │   ├── importantEvents/ # Important events services
+│   │   │   │   │   ├── importantEvents.routes.ts # Important events routes
+│   │   │   │   │   └── importantEvents.service.ts # Important events logic
+│   │   │   │   ├── db/          # Database layer
+│   │   │   │   │   └── database.service.ts  # PostgreSQL connection
+│   │   │   │   └── health/      # Health check service
+│   │   │   │       └── health.routes.ts     # Health check routes
 │   │   │   ├── scripts/         # CLI utilities
 │   │   │   │   ├── migrate.ts           # Migration runner
 │   │   │   │   └── migrate-status.ts    # Migration status checker
-│   │   │   ├── migrations/      # Database migration files
-│   │   │   │   └── 202508271438.ts      # Initial schema migration
-│   │   │   ├── routes/          # API endpoints
-│   │   │   │   ├── auth.ts              # Auth routes
-│   │   │   │   └── calendar.ts          # Calendar routes
-│   │   │   ├── services/        # Business logic
-│   │   │   │   └── calendar.ts          # Google Calendar API
-│   │   │   └── index.ts         # Server entry point
-│   │   └── static/              # Built frontend files
-│   └── shared/                   # Shared utilities
+│   │   │   ├── env.ts           # Environment configuration
+│   │   │   ├── index.ts         # Server entry point
+│   │   │   └── server.ts        # Server setup
+│   │   ├── migrations/          # Database migration files
+│   │   │   ├── 202508271438.ts              # Initial schema
+│   │   │   └── 202509011459-important-events-settings.ts # Important events
+│   │   └── package.json
+│   └── shared/                   # Shared TypeScript types
+│       ├── src/
+│       │   ├── types/           # Type definitions
+│       │   │   └── index.ts     # Main types export
+│       │   ├── utils/           # Utility functions
+│       │   │   └── index.ts     # Main utils export
+│       │   └── index.ts         # Main package export
+│       └── package.json
 ├── docker-compose.yml            # PostgreSQL development database
 ├── Dockerfile                    # Production container
 ├── fly.toml                      # Fly.io deployment config
-└── package.json                  # Root workspace config
+├── package.json                  # Root workspace config
+└── biome.json                    # Code formatting config
 ```
 
 ## 🎯 Core Features
@@ -330,13 +398,13 @@ timely/
 
 ```bash
 # Run frontend unit tests
-bun test
+bun run test
 
 # Run TypeScript type checking
-bun type-check
+bun run type-check
 
 # Frontend tests only
-cd packages/frontend && bun test:unit
+cd packages/frontend && bun run test:unit
 
 # Type check specific package
 cd packages/frontend && bun run type-check

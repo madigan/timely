@@ -34,57 +34,63 @@ The **Timely Frontend** is a Vue 3 single-page application built with TypeScript
 
 ```
 packages/frontend/
-  public/
-    favicon.ico              # Application favicon
-  src/
-    assets/
-      base.css               # Base styles
-      logo.svg               # Application logo
-      main.css               # Main stylesheet
-    components/
-      CalendarGrid.vue       # Monthly calendar grid display
-      CalendarMonth.vue      # Individual month component
-      CategoryModal.vue      # Category creation/editing modal
-      CategorySettings.vue   # Category management interface
-      FeaturesSection.vue    # Landing page features section
-      Footer.vue             # Application footer
-      Header.vue             # Application header with navigation
-      HeroSection.vue        # Landing page hero section
-      ImportantEventsPanel.vue # Important events display
-      ImportantEventsSettings.vue # Important events configuration
-      MonthAnalyticsModal.vue # Monthly analytics modal
-      MonthlyStatsPanel.vue  # Monthly statistics display
-      WeeklyStatsPanel.vue   # Weekly statistics display
-    constants/
-      display.ts             # Display-related constants
-    lib/
-      __tests__/
-        eventAnalytics.test.ts # Analytics tests
-      eventAnalytics.ts      # Event analytics utilities
-    router/
-      index.ts               # Vue Router configuration
-    stores/
-      auth.ts                # Authentication state management
-      calendars.ts           # Calendar data state
-      categories.ts          # Category state management
-      importantEvents.ts     # Important events state
-      toast.ts               # Toast notification state
-    utils/
-      events.ts              # Event utility functions
-    views/
-      HomeView.vue           # Main application view
-      SettingsView.vue       # Settings page
-    App.vue                  # Root Vue component
-    main.ts                  # Application entry point
-  env.d.ts                   # TypeScript environment declarations
-  index.html                 # HTML template
-  package.json
-  tsconfig.app.json
-  tsconfig.json
-  tsconfig.node.json
-  tsconfig.vitest.json
-  vite.config.ts
-  vitest.config.ts
+   public/
+     favicon.ico              # Application favicon
+   src/
+     assets/
+       base.css               # Base styles
+       logo.svg               # Application logo
+       main.css               # Main stylesheet
+     components/
+       skeletons/
+         CalendarGridSkeleton.vue    # Calendar grid loading skeleton
+         CalendarMonthSkeleton.vue   # Month component loading skeleton
+         ImportantEventsSkeleton.vue # Important events loading skeleton
+         MonthlyStatsSkeleton.vue    # Stats panel loading skeleton
+       CalendarGrid.vue       # Monthly calendar grid display
+       CalendarMonth.vue      # Individual month component
+       CategoryModal.vue      # Category creation/editing modal
+       CategorySettings.vue   # Category management interface
+       FeaturesSection.vue    # Landing page features section
+       Footer.vue             # Application footer
+       Header.vue             # Application header with navigation
+       HeroSection.vue        # Landing page hero section
+       ImportantEventsPanel.vue # Important events display
+       ImportantEventsSettings.vue # Important events configuration
+       MonthAnalyticsModal.vue # Monthly analytics modal
+       MonthlyStatsPanel.vue  # Monthly statistics display
+       WeeklyStatsPanel.vue   # Weekly statistics display
+     constants/
+       display.ts             # Display-related constants
+     lib/
+       __tests__/
+         eventAnalytics.test.ts # Analytics tests
+       eventAnalytics.ts      # Event analytics utilities
+     router/
+       index.ts               # Vue Router configuration
+     stores/
+       auth.ts                # Authentication state management
+       calendars.ts           # Calendar data state
+       categories.ts          # Category state management
+       importantEvents.ts     # Important events state
+       toast.ts               # Toast notification state
+     utils/
+       events.ts              # Event utility functions
+     views/
+       CalendarView.vue       # Main calendar application view
+       SettingsView.vue       # Settings page
+       SplashView.vue         # Landing page
+     App.vue                  # Root Vue component
+     main.ts                  # Application entry point
+   env.d.ts                   # TypeScript environment declarations
+   index.html                 # HTML template
+   package.json
+   tsconfig.app.json
+   tsconfig.json
+   tsconfig.node.json
+   tsconfig.vitest.json
+   vite.config.ts
+   vitest.config.ts
 ```
 
 ## Core Features & Functionality
@@ -186,11 +192,11 @@ VITE_API_BASE_URL=http://localhost:3000
 ### API Integration
 The frontend communicates with the backend API using the following route structure:
 - **API Calls**: All backend API endpoints are prefixed with `/api/*`
-- **Authentication**: Auth-related endpoints use `/api/auth/*`
+- **Authentication**: Auth-related endpoints use `/auth/*` (not `/api/auth/*`)
 - **Static Assets**: All other routes (`/*`) serve the SPA's static assets
 
 Example API calls:
-- Authentication: `${VITE_API_BASE_URL}/api/auth/profile`
+- Authentication: `${VITE_API_BASE_URL}/auth/profile`
 - Calendar data: `${VITE_API_BASE_URL}/api/calendars/events`
 - Categories: `${VITE_API_BASE_URL}/api/categories`
 - Important events: `${VITE_API_BASE_URL}/api/important-events/settings`
@@ -263,7 +269,8 @@ interface User {
 ## Component Architecture
 
 ### Page Components (Views)
-- **HomeView.vue**: Main application interface with calendar and analytics
+- **SplashView.vue**: Landing page with application introduction
+- **CalendarView.vue**: Main application interface with calendar and analytics
 - **SettingsView.vue**: User preferences and configuration
 
 ### Feature Components
@@ -312,12 +319,13 @@ The frontend is a single-page application (SPA) that handles all non-API routes 
 ```typescript
 // src/router/index.ts
 const routes = [
-  { path: '/', component: HomeView },
+  { path: '/', component: SplashView },
+  { path: '/calendar', component: CalendarView },
   { path: '/settings', component: SettingsView }
 ]
 ```
 
-**Note**: API routes (`/api/*`) are handled by the backend server, while all other routes serve the SPA's static assets.
+**Note**: API routes (`/api/*` and `/auth/*`) are handled by the backend server, while all other routes serve the SPA's static assets.
 
 ## Testing Setup
 

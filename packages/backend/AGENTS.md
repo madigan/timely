@@ -32,36 +32,38 @@ The **Timely Backend** is a Bun-based API server built with the Elysia web frame
 
 ```
 packages/backend/
-  migrations/
-    202508271438.ts          # Database migration files
-    202509011459-important-events-settings.ts # Important events settings table
-  src/
-    env.ts                   # Environment configuration
-    index.ts                 # Main server entry point
-   routes/
-       auth.routes.ts         # Authentication endpoints (/api/auth/*)
-       calendar.routes.ts     # Calendar API endpoints (/api/calendar/*)
-       categories.routes.ts   # Category management endpoints (/api/categories/*)
-       importantEvents.routes.ts # Important events settings endpoints (/api/important-events/*)
-    scripts/
-      migrate-status.ts      # Check migration status
-      migrate.ts             # Run database migrations
-    services/
-      auth/
-        auth.env.ts          # Auth-specific environment config
-        oauth.ts             # Google OAuth 2.0 implementation
-        tokens.ts            # Token encryption and management
-      categories/
-        categories.service.ts # Category business logic
-      db/
-        database.env.ts      # Database environment config
-        database.service.ts  # Database connection and queries
-      importantEvents/
-        importantEvents.service.ts # Important events settings management
-      calendar.ts            # Google Calendar API integration
-  .gitignore
-  package.json
-  tsconfig.json
+   migrations/
+     202508271438.ts          # Initial database schema migration
+     202509011459-important-events-settings.ts # Important events settings table
+   src/
+     env.ts                   # Environment configuration
+     index.ts                 # Main server entry point
+     server.ts                # Server setup and configuration
+     services/
+       auth/
+         auth.middleware.ts   # Authentication middleware
+         auth.routes.ts       # Authentication endpoints (/auth/*)
+         auth.service.ts      # Authentication business logic
+         tokens.service.ts    # Token encryption and management
+       calendar/
+         calendar.routes.ts   # Calendar API endpoints (/api/calendars/*)
+         calendar.service.ts  # Google Calendar API integration
+       categories/
+         categories.routes.ts # Category management endpoints (/api/categories/*)
+         categories.service.ts # Category business logic
+       importantEvents/
+         importantEvents.routes.ts # Important events settings endpoints (/api/important-events/*)
+         importantEvents.service.ts # Important events settings management
+       db/
+         database.service.ts  # Database connection and queries
+       health/
+         health.routes.ts     # Health check endpoints
+     scripts/
+       migrate-status.ts      # Check migration status
+       migrate.ts             # Run database migrations
+   .gitignore
+   package.json
+   tsconfig.json
 ```
 
 ## Core Features & Functionality
@@ -114,10 +116,36 @@ packages/backend/
 
 #### Schema
 - **users**: User accounts with encrypted OAuth tokens
+  - `id` (PRIMARY KEY, TEXT)
+  - `access_token` (TEXT, encrypted with AES-256-CBC)
+  - `refresh_token` (TEXT, optional, encrypted with AES-256-CBC)
+  - `expiry_date` (BIGINT, timestamp)
+  - `email`, `name`, `picture` (user profile)
+  - `created_at`, `updated_at` (TIMESTAMP)
 - **sessions**: User session management with expiration
+  - `session_id` (PRIMARY KEY, TEXT)
+  - `user_id` (TEXT, foreign key to users.id)
+  - `created_at` (TIMESTAMP)
+  - `expires_at` (TIMESTAMP, default CURRENT_TIMESTAMP + 30 days)
 - **categories**: User-defined categories with keywords and targets
+  - `id` (PRIMARY KEY, TEXT, default gen_random_uuid())
+  - `user_id` (TEXT, foreign key to users.id, ON DELETE CASCADE)
+  - `name` (TEXT)
+  - `color` (TEXT, hex color code)
+  - `keywords` (TEXT[], array of keywords)
+  - `target` (INTEGER, 0-100)
+  - `created_at`, `updated_at` (TIMESTAMP)
 - **important_event_settings**: User-specific important event keywords and preferences
+  - `id` (PRIMARY KEY, TEXT, default gen_random_uuid())
+  - `user_id` (TEXT, foreign key to users.id, ON DELETE CASCADE)
+  - `keywords` (TEXT[], array of keywords)
+  - `enabled` (BOOLEAN, default true)
+  - `display_limit` (INTEGER, 1-20, default 3)
+  - `created_at`, `updated_at` (TIMESTAMP)
 - **migrations**: Migration tracking
+  - `name` (PRIMARY KEY, TEXT)
+  - `status` (TEXT)
+  - `created_at`, `updated_at` (TIMESTAMP)
 
 ## Development Commands
 
@@ -228,32 +256,37 @@ interface ImportantEventSettingsInput {
 ```
 
 ### Database Tables
-- **users**: `id`, `email`, `name`, `picture`, `encrypted_tokens`, `created_at`, `updated_at`
-- **sessions**: `id`, `user_id`, `session_id`, `expires_at`, `created_at`
+- **users**: `id`, `access_token`, `refresh_token`, `expiry_date`, `email`, `name`, `picture`, `created_at`, `updated_at`
+- **sessions**: `session_id`, `user_id`, `created_at`, `expires_at`
 - **categories**: `id`, `user_id`, `name`, `color`, `keywords`, `target`, `created_at`, `updated_at`
 - **important_event_settings**: `id`, `user_id`, `keywords`, `enabled`, `display_limit`, `created_at`, `updated_at`
+- **migrations**: `name`, `status`, `created_at`, `updated_at`
 
 ## API Endpoints
 
 ### Authentication
-- `GET /api/auth/google` - Initiate OAuth flow
-- `GET /api/auth/google/callback` - OAuth callback handler
-- `POST /api/auth/logout` - Logout and clear session
-- `GET /api/auth/profile` - Get current user info
+- `GET /auth/google` - Initiate Google OAuth flow
+- `GET /auth/google/callback` - OAuth callback handler
+- `POST /auth/logout` - Logout and clear session
+- `GET /auth/profile` - Get current user profile information
 
 ### Calendar
-- `GET /api/calendars` - Get user's calendars
-- `GET /api/calendars/events` - Get calendar events with filtering
+- `GET /api/calendars` - Get user's Google calendars
+- `GET /api/calendars/:id/events` - Get events for specific calendar
+- `GET /api/calendars/events` - Get events from all enabled calendars
 
 ### Categories
 - `GET /api/categories` - Get user's categories
 - `POST /api/categories` - Create new category
-- `PUT /api/categories/:id` - Update category
+- `PUT /api/categories/:id` - Update existing category
 - `DELETE /api/categories/:id` - Delete category
 
 ### Important Events
 - `GET /api/important-events/settings` - Get user's important event settings
 - `PUT /api/important-events/settings` - Update user's important event settings
+
+### Health Check
+- `GET /api/health` - Health check endpoint
 
 ## Security Features
 

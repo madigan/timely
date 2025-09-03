@@ -13,7 +13,7 @@ The **Timely Shared** package contains common TypeScript types, interfaces, and 
 ### Key Dependencies
 ```json
 {
-  "typescript": "^5.6.3"
+  "typescript": "~5.8.0"
 }
 ```
 
@@ -52,7 +52,7 @@ bun install
 # Type checking
 bun run type-check
 
-# Build (if needed)
+# Build (TypeScript compilation)
 bun run build
 ```
 
@@ -63,19 +63,21 @@ bun run build
 {
   "compilerOptions": {
     "target": "ES2022",
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "composite": true,
     "strict": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "dist",
-    "rootDir": "src"
+    "allowJs": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }
 ```
 
@@ -160,17 +162,11 @@ interface ImportantEventSettingsInput {
 
 ### API Response Types
 ```typescript
-interface ApiResponse<T> {
-  success: boolean;
+interface ApiResponse<T = any> {
   data?: T;
-  error?: string;
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
+  message?: string;
+  status: "success" | "error";
+  timestamp?: string;
 }
 ```
 

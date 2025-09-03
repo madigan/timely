@@ -91,14 +91,43 @@ Responsive calendar grid with print optimization for organizational planning.
 
 ### Tables
 - **users**: User account information and encrypted OAuth tokens
+  - `id` (PRIMARY KEY, TEXT)
+  - `access_token` (TEXT, encrypted with AES-256-CBC)
+  - `refresh_token` (TEXT, optional, encrypted with AES-256-CBC)
+  - `expiry_date` (BIGINT, timestamp)
+  - `email` (TEXT, user email)
+  - `name` (TEXT, user display name)
+  - `picture` (TEXT, user profile picture URL)
+  - `created_at`, `updated_at` (TIMESTAMP)
 - **sessions**: User session management with expiration
+  - `session_id` (PRIMARY KEY, TEXT)
+  - `user_id` (TEXT, foreign key to users.id)
+  - `created_at` (TIMESTAMP)
+  - `expires_at` (TIMESTAMP, default CURRENT_TIMESTAMP + 30 days)
 - **categories**: User-defined event categories with keywords and targets
+  - `id` (PRIMARY KEY, TEXT, default gen_random_uuid())
+  - `user_id` (TEXT, foreign key to users.id, ON DELETE CASCADE)
+  - `name` (TEXT, category name)
+  - `color` (TEXT, hex color code)
+  - `keywords` (TEXT[], array of keywords for auto-categorization)
+  - `target` (INTEGER, percentage target 0-100)
+  - `created_at`, `updated_at` (TIMESTAMP)
 - **important_event_settings**: User-specific important event keywords and preferences
+  - `id` (PRIMARY KEY, TEXT, default gen_random_uuid())
+  - `user_id` (TEXT, foreign key to users.id, ON DELETE CASCADE)
+  - `keywords` (TEXT[], array of keywords for important event detection)
+  - `enabled` (BOOLEAN, default true)
+  - `display_limit` (INTEGER, 1-20, default 3)
+  - `created_at`, `updated_at` (TIMESTAMP)
 - **migrations**: Database migration tracking
+  - `name` (PRIMARY KEY, TEXT) - Migration filename
+  - `status` (TEXT) - `IN_PROGRESS` or `COMPLETED`
+  - `created_at`, `updated_at` (TIMESTAMP)
 
 ### Key Relationships
 - Categories belong to users (user_id foreign key)
 - Sessions belong to users (user_id foreign key)
+- Important event settings belong to users (user_id foreign key)
 - All tables include created_at and updated_at timestamps
 
 ## Development Commands
@@ -113,10 +142,27 @@ Responsive calendar grid with print optimization for organizational planning.
 bun install
 
 # Start both frontend and backend concurrently
-bun dev
+bun run dev
 
 # Build both frontend and backend
 bun run build
+
+# Start production server
+bun run start
+
+# Run frontend tests
+bun run test
+
+# Run TypeScript type checking
+bun run type-check
+
+# Code formatting and linting
+bun run lint
+bun run lint:fix
+bun run format
+bun run format:write
+bun run check
+bun run check:fix
 ```
 
 ## Configuration & Environment
