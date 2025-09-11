@@ -6,7 +6,7 @@
           ⏰ Timely
         </h1>
         <p class="text-xl md:text-2xl text-base-content/80 mb-8 max-w-2xl mx-auto">
-          Streamline your church's calendar management with intelligent event categorization and seamless scheduling.
+          Streamline your calendar management with intelligent event categorization and seamless scheduling.
         </p>
       </div>
       

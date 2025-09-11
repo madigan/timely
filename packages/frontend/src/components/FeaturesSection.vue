@@ -17,7 +17,7 @@
           </div>
           <h3 class="text-xl font-bold mb-3">Smart Calendar Integration</h3>
           <p class="text-base-content/70">
-            Connect multiple church calendars and manage them all in one unified view.
+            Connect multiple calendars and manage them all in one unified view.
           </p>
         </div>
         
@@ -27,7 +27,7 @@
           </div>
           <h3 class="text-xl font-bold mb-3">Automatic Categorization</h3>
           <p class="text-base-content/70">
-            Events are automatically sorted into worship, fellowship, outreach, and education categories.
+            Automatically categorize events based on keywords.
           </p>
         </div>
         
@@ -37,47 +37,14 @@
           </div>
           <h3 class="text-xl font-bold mb-3">Visual Insights</h3>
           <p class="text-base-content/70">
-            See at a glance how your church activities are distributed across different ministries.
+            See at a glance where your time is going—and if any category is being neglected.
           </p>
-        </div>
-      </div>
-      
-      <div class="bg-base-100 rounded-lg p-8">
-        <div class="grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <h3 class="text-2xl font-bold mb-4">Built for Ministry Leaders</h3>
-            <ul class="space-y-3">
-              <li class="flex items-center">
-                <span class="w-2 h-2 bg-primary rounded-full mr-3"></span>
-                <span>Manage worship services, Bible studies, and prayer meetings</span>
-              </li>
-              <li class="flex items-center">
-                <span class="w-2 h-2 bg-secondary rounded-full mr-3"></span>
-                <span>Track youth ministry, women's ministry, and men's groups</span>
-              </li>
-              <li class="flex items-center">
-                <span class="w-2 h-2 bg-accent rounded-full mr-3"></span>
-                <span>Organize community outreach and mission activities</span>
-              </li>
-              <li class="flex items-center">
-                <span class="w-2 h-2 bg-warning rounded-full mr-3"></span>
-                <span>Schedule volunteer training and leadership meetings</span>
-              </li>
-            </ul>
-          </div>
-          
-          <div class="mockup-code">
-            <pre data-prefix="$"><code>church-main: 85 events</code></pre>
-            <pre data-prefix=">" class="text-primary"><code>youth-ministry: 45 events</code></pre>
-            <pre data-prefix=">" class="text-secondary"><code>worship-team: 62 events</code></pre>
-            <pre data-prefix=">" class="text-accent"><code>community-outreach: 38 events</code></pre>
-          </div>
         </div>
       </div>
       
       <div class="text-center mt-12">
         <button class="btn btn-primary btn-lg" @click="$emit('getStarted')">
-          Start Managing Your Church Calendar
+          Start Managing Your Calendar
         </button>
       </div>
     </div>

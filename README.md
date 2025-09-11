@@ -1,8 +1,14 @@
 # Timely Calendar Management System
 
+## 📖 Story
+
 A busy friend (doing the work of three people) needed help understanding where his time was going, so I wrote Timely to import his information from his different Google calendars, categorize his events, and show him where his time was going.
 
+This repository is also an experiment in "vibe-coding" (using an AI to generate significant portions of the codebase), since it's a skill that I'm trying to learn.
+
 ## 🚀 Usage
+
+> ⚠ This app is in a closed alpha right now, which means if you want to try the app out I need to whitelist your email. Feel free to [create an issue](https://github.com/madigan/timely/issues/new) and I'll give you access! Once that's done, you can follow the instructions below:
 
 Go to [timely-demo.fly.dev](https://timely-demo.fly.dev) and log in with your GMail account. Then go to the [settings](https://timely-demo.fly.dev/settings) page and choose which calendars you want to import and which categories you want to use (events are categorized based on keywords in their title or description). You can also set which keywords will flag an event as "important." Then you're off to the races!
 
@@ -75,16 +81,8 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ENCRYPTION_KEY=your_64_character_hex_encryption_key_here
 
-# PostgreSQL Database (choose one approach)
-# Option 1: Single connection string (recommended)
+# PostgreSQL Database
 DATABASE_URL=postgresql://timely_user:timely_password@localhost:5432/timely
-
-# Option 2: Individual parameters
-# POSTGRES_HOST=localhost
-# POSTGRES_PORT=5432
-# POSTGRES_DB=timely
-# POSTGRES_USER=timely_user
-# POSTGRES_PASSWORD=timely_password
 
 # Server configuration
 NODE_ENV=development
@@ -262,262 +260,6 @@ docker compose down
 ### Health Check
 - `GET /api/health` - Health check endpoint
 
-## 📁 Project Structure
-
-```
-timely/
-├── packages/
-│   ├── frontend/                 # Vue 3 Application
-│   │   ├── src/
-│   │   │   ├── components/       # Vue components
-│   │   │   │   ├── skeletons/    # Loading skeleton components
-│   │   │   │   ├── CalendarGrid.vue      # Main calendar display
-│   │   │   │   ├── CalendarMonth.vue     # Individual month component
-│   │   │   │   ├── CategoryModal.vue     # Category management modal
-│   │   │   │   ├── CategorySettings.vue  # Category settings interface
-│   │   │   │   ├── Header.vue            # Navigation with auth
-│   │   │   │   ├── ImportantEventsPanel.vue # Important events display
-│   │   │   │   ├── ImportantEventsSettings.vue # Important events config
-│   │   │   │   ├── MonthAnalyticsModal.vue # Monthly analytics modal
-│   │   │   │   ├── MonthlyStatsPanel.vue # Monthly statistics
-│   │   │   │   ├── WeeklyStatsPanel.vue  # Weekly statistics
-│   │   │   │   └── ...
-│   │   │   ├── stores/          # Pinia state management
-│   │   │   │   ├── auth.ts              # Authentication state
-│   │   │   │   ├── calendars.ts         # Calendar data & events
-│   │   │   │   ├── categories.ts        # Event categorization
-│   │   │   │   ├── importantEvents.ts   # Important events state
-│   │   │   │   └── toast.ts             # Toast notifications
-│   │   │   ├── views/           # Page components
-│   │   │   │   ├── CalendarView.vue     # Main calendar view
-│   │   │   │   ├── SettingsView.vue     # Configuration page
-│   │   │   │   └── SplashView.vue       # Landing page
-│   │   │   ├── utils/           # Utility functions
-│   │   │   │   └── events.ts            # Event utility functions
-│   │   │   ├── lib/             # Library code
-│   │   │   │   ├── __tests__/           # Test files
-│   │   │   │   └── eventAnalytics.ts    # Analytics utilities
-│   │   │   ├── router/          # Vue Router config
-│   │   │   └── constants/        # Application constants
-│   │   ├── index.html           # HTML template
-│   │   └── vite.config.ts       # Vite configuration
-│   ├── backend/                  # Bun + Elysia API
-│   │   ├── src/
-│   │   │   ├── services/        # Service modules
-│   │   │   │   ├── auth/        # Authentication services
-│   │   │   │   │   ├── auth.middleware.ts   # Auth middleware
-│   │   │   │   │   ├── auth.routes.ts       # Auth routes
-│   │   │   │   │   ├── auth.service.ts      # Auth business logic
-│   │   │   │   │   └── tokens.service.ts    # Token management
-│   │   │   │   ├── calendar/    # Calendar services
-│   │   │   │   │   ├── calendar.routes.ts   # Calendar routes
-│   │   │   │   │   └── calendar.service.ts  # Calendar API logic
-│   │   │   │   ├── categories/  # Category services
-│   │   │   │   │   ├── categories.routes.ts # Category routes
-│   │   │   │   │   └── categories.service.ts # Category business logic
-│   │   │   │   ├── importantEvents/ # Important events services
-│   │   │   │   │   ├── importantEvents.routes.ts # Important events routes
-│   │   │   │   │   └── importantEvents.service.ts # Important events logic
-│   │   │   │   ├── db/          # Database layer
-│   │   │   │   │   └── database.service.ts  # PostgreSQL connection
-│   │   │   │   └── health/      # Health check service
-│   │   │   │       └── health.routes.ts     # Health check routes
-│   │   │   ├── scripts/         # CLI utilities
-│   │   │   │   ├── migrate.ts           # Migration runner
-│   │   │   │   └── migrate-status.ts    # Migration status checker
-│   │   │   ├── env.ts           # Environment configuration
-│   │   │   ├── index.ts         # Server entry point
-│   │   │   └── server.ts        # Server setup
-│   │   ├── migrations/          # Database migration files
-│   │   │   ├── 202508271438.ts              # Initial schema
-│   │   │   └── 202509011459-important-events-settings.ts # Important events
-│   │   └── package.json
-│   └── shared/                   # Shared TypeScript types
-│       ├── src/
-│       │   ├── types/           # Type definitions
-│       │   │   └── index.ts     # Main types export
-│       │   ├── utils/           # Utility functions
-│       │   │   └── index.ts     # Main utils export
-│       │   └── index.ts         # Main package export
-│       └── package.json
-├── docker-compose.yml            # PostgreSQL development database
-├── Dockerfile                    # Production container
-├── fly.toml                      # Fly.io deployment config
-├── package.json                  # Root workspace config
-└── biome.json                    # Code formatting config
-```
-
-## 🎯 Core Features
-
-### 1. **Google Calendar Integration**
-- Full Google OAuth 2.0 authentication flow
-- Real-time calendar data synchronization
-- Multiple calendar support with enable/disable toggles
-- Automatic token refresh handling
-
-### 2. **Event Categorization**
-- Keyword-based automatic event classification
-- Pre-configured categories for church/ministry use:
-  - Worship Services (40% target)
-  - Fellowship (25% target)
-  - Community Outreach (20% target)
-  - Education & Study (10% target)
-  - Music & Arts (5% target)
-- Color-coded visualization
-- CRUD operations for custom categories
-
-### 3. **Calendar Visualization**
-- Monthly grid view with event display
-- Date range filtering
-- Print-optimized layouts
-- Responsive design for mobile devices
-- Important events highlighting
-
-### 4. **Settings & Configuration**
-- Calendar visibility toggles
-- Category management interface
-- Important events keyword configuration
-- User profile management
-
-## 🔐 Security Features
-
-### Authentication
-- **Server-side OAuth 2.0**: Complete Google OAuth implementation
-- **CSRF Protection**: State-based protection against cross-site request forgery
-- **HTTP-only Cookies**: Session cookies not accessible to JavaScript
-- **Token Encryption**: AES-256-CBC encryption for stored access/refresh tokens
-- **Automatic Token Refresh**: Handles expired tokens transparently
-
-### Database Security
-- **Connection Pooling**: Secure connection management
-- **Parameterized Queries**: SQL injection protection
-- **Encrypted Storage**: All sensitive tokens encrypted at rest
-- **Session Expiration**: Automatic cleanup of expired sessions
-
-## 🧪 Testing
-
-```bash
-# Run frontend unit tests
-bun run test
-
-# Run TypeScript type checking
-bun run type-check
-
-# Frontend tests only
-cd packages/frontend && bun run test:unit
-
-# Type check specific package
-cd packages/frontend && bun run type-check
-```
-
-## 🚀 Deployment
-
-### Fly.io Deployment (Recommended)
-
-The application is configured for deployment on **Fly.io**:
-
-```bash
-# Deploy to Fly.io
-fly deploy
-
-# Check deployment status
-fly status
-
-# View logs
-fly logs
-```
-
-### Docker Deployment
-
-```bash
-# Build production image
-docker build -t timely .
-
-# Run container
-docker run -p 3000:3000 timely
-```
-
-### Environment Variables for Production
-
-Ensure these are set in your production environment:
-- `DATABASE_URL` - PostgreSQL connection string
-- `GOOGLE_CLIENT_ID` - Google OAuth client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret  
-- `ENCRYPTION_KEY` - 32-byte hex encryption key
-- `NODE_ENV=production`
-
-## 📊 Data Models
-
-### Core Interfaces
-
-```typescript
-interface Calendar {
-  id: string;
-  summary: string;
-  primary?: boolean;
-  backgroundColor?: string;
-  isEnabled: boolean;
-  events?: CalendarEvent[];
-}
-
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  start: { dateTime?: string; date?: string };
-  end: { dateTime?: string; date?: string };
-  location?: string;
-  description?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  keywords: string[];
-  target: number; // percentage (0-100)
-}
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  picture: string;
-}
-```
-
-## 🛠️ Development Guidelines
-
-### Code Style
-- **Vue 3 Composition API**: Use `<script setup>` syntax exclusively
-- **TypeScript**: Full type safety with proper interfaces
-- **Tailwind CSS**: Utility-first styling with DaisyUI components
-- **Pinia Stores**: Reactive state management with composable pattern
-- **RESTful APIs**: Follow REST conventions for all endpoints
-
-### File Naming
-- **Components**: PascalCase (e.g., `CalendarGrid.vue`)
-- **Stores**: camelCase (e.g., `auth.ts`, `calendars.ts`)
-- **Utilities**: camelCase (e.g., `events.ts`)
-- **Routes**: kebab-case (e.g., `/api/calendar-events`)
-
-### Best Practices
-1. **Responsive Design**: Mobile-first approach
-2. **Print Optimization**: Calendar views optimized for printing
-3. **Error Handling**: Comprehensive error handling and user feedback
-4. **Performance**: Lazy loading and efficient state management
-5. **Accessibility**: ARIA labels and semantic HTML
-6. **Security**: Always validate and sanitize user inputs
-
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** following the development guidelines
-4. **Run tests**: `bun test && bun type-check`
-5. **Commit changes**: `git commit -m 'Add amazing feature'`
-6. **Push to branch**: `git push origin feature/amazing-feature`
-7. **Open a Pull Request**
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -529,7 +271,3 @@ For issues and questions:
 2. Review this README for configuration help
 3. Check the Docker Compose logs: `docker compose logs`
 4. Verify Google OAuth setup in Google Cloud Console
-
----
-
-**Built with ❤️ for church and ministry calendar management**
